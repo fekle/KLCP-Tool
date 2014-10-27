@@ -115,20 +115,7 @@ void vsys_server::new_connection(){
 
 void vsys_server::recieve_message(){
     clearBuffer();
-    size = (int) recv(connection, buffer, BUF-1, 0);
-    
-    if(size > 0){
-        buffer[size] = '\0';
-        // std::cout << "> " << buffer << std::endl;
-        error = false;
-    }else if (size == 0){
-        std::cout << "Client closed remote socket." << std::endl;
-        error = true;
-    }else{
-        std::cerr << "RCV ERROR: " << strerror(errno) << std::endl;
-        error = true;
-    }
-    
+    read(connection, buffer, sizeof(buffer));
     lastRequest.init(buffer);
 }
 
@@ -198,11 +185,7 @@ void vsys_server::send_file(std::string filename, std::string path){
         
         filetosend.close();
         filetosend.clear();
-        
-        clearBuffer();
-        std::string ok = "Donw";
-        strcpy(buffer, ok.c_str());
-        write(connection, buffer, sizeof(buffer));
+        std::cout << "file Send Done";
         
     }else{
         responseStream << "KLCP/0.0.1 404 FILE NOT FOUND" << std::endl << std::endl;
