@@ -173,10 +173,10 @@ void vsys_server::send_file(std::string filename, std::string path){
         getfilesize.close();
         getfilesize.clear();
         
-        responseStream << "KLCP/0.0.1 200 OK" << std::endl << "Content-Type: file" << std::endl << "Content-Length: " << filesize << std::endl << "Block-Size: " << 512 << std::endl << "Block-Count: " << blockcount << std::endl << file << std::endl << std::endl;
+        responseStream << "KLCP/0.0.1 200 OK" << std::endl << "Content-Type: file" << std::endl << "Content-Length: " << filesize << std::endl << "Block-Size: " << 512 << std::endl << "Block-Count: " << blockcount << std::endl << std::endl;
         
         responseMessage = responseStream.str();
-        
+        std::cout << responseMessage;
         clearBuffer();
         strcpy(buffer, responseMessage.c_str());
         write(connection, buffer, sizeof(buffer));
