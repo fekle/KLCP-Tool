@@ -25,6 +25,8 @@
 /* Begin PBXFileReference section */
 		68B385FD19FDC37200EB63AA /* bif-ws14-vsys-server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "bif-ws14-vsys-server"; sourceTree = BUILT_PRODUCTS_DIR; };
 		68B3860019FDC37200EB63AA /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		68B3860719FDC44C00EB63AA /* vsys-server.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "vsys-server.h"; sourceTree = "<group>"; };
+		68B3860819FDC45E00EB63AA /* request.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = request.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +60,8 @@
 			isa = PBXGroup;
 			children = (
 				68B3860019FDC37200EB63AA /* main.cpp */,
+				68B3860719FDC44C00EB63AA /* vsys-server.h */,
+				68B3860819FDC45E00EB63AA /* request.h */,
 			);
 			path = "bif-ws14-vsys-server";
 			sourceTree = "<group>";
