@@ -196,6 +196,14 @@ void vsys_server::send_file(std::string filename, std::string path){
             // Error reading
         }
         
+        filetosend.close();
+        filetosend.clear();
+        
+        clearBuffer();
+        std::string ok = "Donw";
+        strcpy(buffer, ok.c_str());
+        write(connection, buffer, sizeof(buffer));
+        
     }else{
         responseStream << "KLCP/0.0.1 404 FILE NOT FOUND" << std::endl << std::endl;
         

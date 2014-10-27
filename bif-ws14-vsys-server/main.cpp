@@ -45,6 +45,7 @@ int main(int argc, char **argv){
         server.new_connection();
         
         do{
+            std::cout << std::endl << "Wating for message... " << std::endl;
             server.recieve_message();
             std::string requestType = server.lastRequest.getType();
             
