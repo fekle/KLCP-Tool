@@ -36,6 +36,8 @@ int main(int argc, char **argv){
     int port = stoi(args[0]);
     std::string filepath = args[1];
     
+    std::cout << "VSYS SERVER" << std::endl << "\t Port: " << port << std::endl << "\t Filepath: " << filepath << std::endl << "===" << std::endl << std::endl;
+    
     vsys_server server(port);
     
     while(1){
