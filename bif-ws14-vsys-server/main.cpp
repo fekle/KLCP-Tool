@@ -53,12 +53,12 @@ int main(int argc, char **argv){
                 server.send_message(filesInDir(filepath));
             }else if(requestType == "GET"){
                 server.send_file(server.lastRequest.getUrl(), filepath);
-            }else{
+            }else if(strncmp(server.buffer, "QUIT", 4)){
                 server.send_message("Invalid Command");
             }
             
             
-        }while(strncmp(server.buffer, "quit", 4)  != 0);
+        }while(strncmp(server.buffer, "QUIT", 4)  != 0);
         
         server.close_connection();
         
