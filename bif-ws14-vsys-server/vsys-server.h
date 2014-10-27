@@ -22,6 +22,7 @@
 #include <dirent.h>
 #include "request.h"
 #include <unordered_map>
+#include <cmath>
 #define BUF 1024
 
 #ifndef VSYS_Server_vsys_server_h
@@ -167,7 +168,7 @@ void vsys_server::send_file(std::string filename, std::string path){
         getfilesize.open(file.c_str(),std::ios::ate);
         
         unsigned long filesize = getfilesize.tellg();
-        unsigned int blockcount = std::ceil((float) filesize / 512);
+        unsigned int blockcount = ceil((float) filesize / 512);
         
         getfilesize.close();
         getfilesize.clear();
