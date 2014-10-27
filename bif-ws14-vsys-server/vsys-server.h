@@ -167,7 +167,7 @@ void vsys_server::send_file(std::string filename, std::string path){
         getfilesize.open(file.c_str(),std::ios::ate);
         
         unsigned long filesize = getfilesize.tellg();
-        unsigned int blockcount = ceil((float) filesize / 512);
+        unsigned int blockcount = std::ceil((float) filesize / 512);
         
         getfilesize.close();
         getfilesize.clear();
