@@ -23,10 +23,14 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		682889D31A153EC5009D6835 /* common.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = common.hpp; sourceTree = "<group>"; };
+		682889D41A154842009D6835 /* server.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = server.hpp; sourceTree = "<group>"; };
+		682889D51A15486F009D6835 /* client.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = client.hpp; sourceTree = "<group>"; };
+		688D34F91A15169D0027668E /* klcp.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = klcp.hpp; sourceTree = "<group>"; };
 		68B385FD19FDC37200EB63AA /* bif-ws14-vsys-server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "bif-ws14-vsys-server"; sourceTree = BUILT_PRODUCTS_DIR; };
 		68B3860019FDC37200EB63AA /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		68B3860719FDC44C00EB63AA /* vsys-server.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "vsys-server.h"; sourceTree = "<group>"; };
-		68B3860819FDC45E00EB63AA /* request.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = request.h; sourceTree = "<group>"; };
+		68B3860719FDC44C00EB63AA /* connection.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = connection.hpp; sourceTree = "<group>"; };
+		68B3860819FDC45E00EB63AA /* request.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = request.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,8 +64,12 @@
 			isa = PBXGroup;
 			children = (
 				68B3860019FDC37200EB63AA /* main.cpp */,
-				68B3860719FDC44C00EB63AA /* vsys-server.h */,
-				68B3860819FDC45E00EB63AA /* request.h */,
+				68B3860719FDC44C00EB63AA /* connection.hpp */,
+				68B3860819FDC45E00EB63AA /* request.hpp */,
+				688D34F91A15169D0027668E /* klcp.hpp */,
+				682889D31A153EC5009D6835 /* common.hpp */,
+				682889D41A154842009D6835 /* server.hpp */,
+				682889D51A15486F009D6835 /* client.hpp */,
 			);
 			path = "bif-ws14-vsys-server";
 			sourceTree = "<group>";
@@ -206,14 +214,28 @@
 		68B3860519FDC37200EB63AA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/local/include/,
+					/usr/local/Cellar/boost/,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "/usr/local/include/ /usr/local/Cellar/boost/";
 			};
 			name = Debug;
 		};
 		68B3860619FDC37200EB63AA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/local/include/,
+					/usr/local/Cellar/boost/,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "/usr/local/include/ /usr/local/Cellar/boost/";
 			};
 			name = Release;
 		};
@@ -236,6 +258,7 @@
 				68B3860619FDC37200EB63AA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

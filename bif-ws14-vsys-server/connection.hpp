@@ -20,53 +20,34 @@
 #include <vector>
 #include <fstream>
 #include <dirent.h>
-#include "request.h"
+#include "request.hpp"
 #include <unordered_map>
 #include <cmath>
+#include "common.hpp"
+#include "klcp.hpp"
 #define BUF 1024
 
-#ifndef VSYS_Server_vsys_server_h
-#define VSYS_Server_vsys_server_h
+#ifndef connection_connection_h
+#define connection_connection_h
 
 
 #endif
 
-std::string filesInDir(std::string path){
-    std::string files;
-    
-    DIR *dir;
-    struct dirent *ent;
-    if ((dir = opendir(path.c_str())) != NULL){
-        files = "Available Files:\n";
-        int i = 0;
-        while ((ent = readdir (dir)) != NULL){
-            if(i>1){
-                files += ent->d_name;
-                files += " ";
-            }
-            i++;
-        }
-        closedir (dir);
-    }else{
-        files = "Directory not found";
-    }
-    
-    return files;
-};
-
-
-class vsys_server{
+class connection{
 private:
-    int create_socket, connection;
+    int create_socket, connection_socket;
     socklen_t addrlen;
     int size;
     struct sockaddr_in address, cliaddress;
     void clearBuffer();
 public:
-    request lastRequest;
+    klcp request;
+    klcp response;
     char buffer[BUF];
-    vsys_server(int);
-    void new_connection();
+    connection(int);
+    connection();
+    void new_server_connection();
+    void new_client_connection(int, std::string);
     void recieve_message();
     void send_message(std::string);
     void send_file(std::string, std::string);
@@ -76,11 +57,11 @@ public:
     std::string errormsg;
 };
 
-void vsys_server::clearBuffer(){
+void connection::clearBuffer(){
     memset(buffer,0,sizeof(buffer));
 }
 
-vsys_server::vsys_server(int port){
+connection::connection(int port){
     create_socket = socket(AF_INET, SOCK_STREAM, 0);
     int optval = 1;
     setsockopt(create_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
@@ -99,41 +80,55 @@ vsys_server::vsys_server(int port){
         
         addrlen = sizeof(struct sockaddr_in);
     }
-    
 };
 
-void vsys_server::new_connection(){
-    connection = accept(create_socket, (struct sockaddr *) &cliaddress, &addrlen);
-    if(connection > 0){
+connection::connection(){
+    create_socket = socket(AF_INET, SOCK_STREAM, 0);
+    int optval = 1;
+    setsockopt(create_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+}
+
+void connection::new_server_connection(){
+    connection_socket = accept(create_socket, (struct sockaddr *) &cliaddress, &addrlen);
+    if(connection_socket > 0){
         std::cout << "Client connected from " << inet_ntoa(cliaddress.sin_addr) << ":" << ntohs(cliaddress.sin_port) << std::endl;
         strcpy(buffer,"Welcome to myserver, Please enter your command:\n");
-        send(connection, buffer, strlen(buffer),0);
+        send(connection_socket, buffer, strlen(buffer),0);
     }else{
         std::cout << "whoops";
     }
 }
 
-void vsys_server::recieve_message(){
-    clearBuffer();
-    read(connection, buffer, sizeof(buffer));
-    lastRequest.init(buffer);
+void connection::new_client_connection(int port, std::string _adress){
+    struct sockaddr_in address;
+    memset(&address,0,sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_port = htons (port);
+    inet_aton(_adress.c_str(), &address.sin_addr);
+    
+    if(connect(connection_socket, (struct sockaddr *) &address, sizeof (address)) == 0){
+        // LOL YOLO BANANE
+    }
 }
 
-void vsys_server::send_message(std::string message){
+void connection::recieve_message(){
     clearBuffer();
-    
-    std::stringstream responseStream;
-    std::string responseMessage;
-    
-    responseStream << "KLCP/0.0.1 " << lastRequest.getStatusCode() << " " << lastRequest.getStatus() << std::endl << "Content-Type: text; charset=utf-8" << std::endl << "Content-Length: " << message.size() << std::endl << std::endl << message;
-    
-    responseMessage = responseStream.str();
-    
-    strcpy(buffer, responseMessage.c_str());
-    write(connection, buffer, sizeof(buffer));
+    read(connection_socket, buffer, sizeof(buffer));
+    std::string rcvmsg(buffer);
+    request.msgParse(rcvmsg);
 }
 
-void vsys_server::send_file(std::string filename, std::string path){
+void connection::send_message(std::string message){
+    clearBuffer();
+    
+    response.setString("type", "message");
+    response.setString("msg", message);
+    
+    strcpy(buffer, response.msgSerialize().c_str());
+    write(connection_socket, buffer, sizeof(buffer));
+}
+
+void connection::send_file(std::string filename, std::string path){
     clearBuffer();
     strcpy(buffer, filename.c_str());
     
@@ -166,18 +161,18 @@ void vsys_server::send_file(std::string filename, std::string path){
         std::cout << responseMessage;
         clearBuffer();
         strcpy(buffer, responseMessage.c_str());
-        write(connection, buffer, sizeof(buffer));
+        write(connection_socket, buffer, sizeof(buffer));
         
         /* Read data from file and send it */
         char filebuffer[512];
         while (filetosend.read(filebuffer, 512)){
-            write(connection, filebuffer, filetosend.gcount());
+            write(connection_socket, filebuffer, filetosend.gcount());
         }
         
         if (filetosend.eof()){
             if (filetosend.gcount() > 0){
                 // Still a few bytes left to write
-                write(connection, filebuffer, filetosend.gcount());
+                write(connection_socket, filebuffer, filetosend.gcount());
             }
         }else if (filetosend.bad()){
             // Error reading
@@ -194,15 +189,15 @@ void vsys_server::send_file(std::string filename, std::string path){
         
         clearBuffer();
         strcpy(buffer, responseMessage.c_str());
-        write(connection, buffer, sizeof(buffer));
+        write(connection_socket, buffer, sizeof(buffer));
     }
     
 }
 
-void vsys_server::close_connection(){
-    close(connection);
+void connection::close_connection(){
+    close(connection_socket);
 }
 
-void vsys_server::quit_server(){
+void connection::quit_server(){
     close(create_socket);
 }
