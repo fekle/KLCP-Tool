@@ -20,7 +20,6 @@
 #include <vector>
 #include <fstream>
 #include <dirent.h>
-#include "request.hpp"
 #include <unordered_map>
 #include <cmath>
 #include "common.hpp"
@@ -61,7 +60,7 @@ public:
 };
 
 void connection::clearBuffer(){
-    memset(buffer, 0, BUF);
+    memset(buffer, '\0', BUF);
 }
 
 connection::connection(int port){

@@ -50,7 +50,7 @@ int main(int argc, char **argv){
     }else if(type == "client"){
         client(adress, port, filepath);
     }else{
-        return 1;
+        return EXIT_FAILURE;
     }
     
     return EXIT_SUCCESS;
