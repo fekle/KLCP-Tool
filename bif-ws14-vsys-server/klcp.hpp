@@ -36,7 +36,7 @@ public:
 };
 
 klcp::klcp(){
-    std::cout << "BANANE OIDA";
+ //   std::cout << "BANANE OIDA";
 }
 
 void klcp::setInt(std::string _key, int _val){
@@ -66,7 +66,12 @@ double klcp::getDouble(std::string _key){
 void klcp::msgParse(std::string _json){
     std::strstream is;
     is << _json;
-    read_json(is, msg);
+    try{
+        read_json(is, msg);
+    }catch(std::exception const& e){
+        std::cout << _json;
+        std::cout << "KLCP PARSE ERROR: " << e.what() << std::endl;
+    }
 }
 
 std::string klcp::msgSerialize(){
@@ -74,7 +79,11 @@ std::string klcp::msgSerialize(){
     msg.put("version", "0.0.1");
   //  msg.put("length", msg.get<std::string>("msg").size());
     std::strstream _json;
-    write_json(_json, msg);
+    try{
+        write_json(_json, msg);
+    }catch(std::exception const& e){
+        std::cout << "KLCP SERIALIZE ERROR: " << e.what() << std::endl;
+    }
     return _json.str();
 }
 

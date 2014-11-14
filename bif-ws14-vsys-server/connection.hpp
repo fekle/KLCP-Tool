@@ -35,80 +35,85 @@
 
 class connection{
 private:
-    int create_socket, connection_socket;
+    int connection_socket;
     socklen_t addrlen;
     int size;
     struct sockaddr_in address, cliaddress;
     void clearBuffer();
 public:
     klcp request;
-    klcp response;
     char buffer[BUF];
     connection(int);
     connection();
     void new_server_connection();
     void new_client_connection(int, std::string);
     void recieve_message();
+    void recieve_binary();
     void send_message(std::string);
+    void send_command(std::string, std::string);
     void send_file(std::string, std::string);
+    void getFile(klcp, std::string);
     void close_connection();
     void quit_server();
+    std::string lastMessage;
     bool error = true; // true=error, false=ok
     std::string errormsg;
 };
 
 void connection::clearBuffer(){
-    memset(buffer,0,sizeof(buffer));
+    memset(buffer, 0, BUF);
 }
 
 connection::connection(int port){
-    create_socket = socket(AF_INET, SOCK_STREAM, 0);
+    connection_socket = socket(AF_INET, SOCK_STREAM, 0);
     int optval = 1;
-    setsockopt(create_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+    setsockopt(connection_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
     
     memset(&address,0,sizeof(address));
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(port);
     
-    if(bind(create_socket, (struct sockaddr *) &address, sizeof(address)) != 0){
+    if(bind(connection_socket, (struct sockaddr *) &address, sizeof(address)) != 0){
         error = true;
         std::cerr << "BIND ERROR - Could not bind to Port " << port << ": " << strerror(errno) << std::endl;
     }else{
         error = false;
-        listen(create_socket, 5);
+        listen(connection_socket, 5);
         
         addrlen = sizeof(struct sockaddr_in);
     }
 };
 
 connection::connection(){
-    create_socket = socket(AF_INET, SOCK_STREAM, 0);
+    connection_socket = socket(AF_INET, SOCK_STREAM, 0);
     int optval = 1;
-    setsockopt(create_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+    setsockopt(connection_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
 }
 
 void connection::new_server_connection(){
-    connection_socket = accept(create_socket, (struct sockaddr *) &cliaddress, &addrlen);
+    connection_socket = accept(connection_socket, (struct sockaddr *) &cliaddress, &addrlen);
     if(connection_socket > 0){
         std::cout << "Client connected from " << inet_ntoa(cliaddress.sin_addr) << ":" << ntohs(cliaddress.sin_port) << std::endl;
-        strcpy(buffer,"Welcome to myserver, Please enter your command:\n");
-        send(connection_socket, buffer, strlen(buffer),0);
     }else{
         std::cout << "whoops";
     }
+    clearBuffer();
 }
 
 void connection::new_client_connection(int port, std::string _adress){
     struct sockaddr_in address;
     memset(&address,0,sizeof(address));
     address.sin_family = AF_INET;
-    address.sin_port = htons (port);
+    address.sin_port = htons(port);
     inet_aton(_adress.c_str(), &address.sin_addr);
     
-    if(connect(connection_socket, (struct sockaddr *) &address, sizeof (address)) == 0){
-        // LOL YOLO BANANE
+    if(connect(connection_socket, (struct sockaddr *) &address, sizeof(address)) == 0){
+        std::cout << "Success!";
+    }else{
+        std::cout << "connection failed!";
     }
+    clearBuffer();
 }
 
 void connection::recieve_message(){
@@ -120,7 +125,7 @@ void connection::recieve_message(){
 
 void connection::send_message(std::string message){
     clearBuffer();
-    
+    klcp response;
     response.setString("type", "message");
     response.setString("msg", message);
     
@@ -128,10 +133,19 @@ void connection::send_message(std::string message){
     write(connection_socket, buffer, sizeof(buffer));
 }
 
+void connection::send_command(std::string cmd, std::string val){
+    clearBuffer();
+    klcp response;
+    response.setString("type", "command");
+    response.setString("msg", cmd);
+    response.setString("value", val);
+    
+    strcpy(buffer, response.msgSerialize().c_str());
+    write(connection_socket, buffer, sizeof(buffer));
+}
+
 void connection::send_file(std::string filename, std::string path){
     clearBuffer();
-    strcpy(buffer, filename.c_str());
-    
     
     std::stringstream ss;
     ss << path << "/" << filename;
@@ -139,10 +153,7 @@ void connection::send_file(std::string filename, std::string path){
     ss.clear();
     
     std::ifstream filetosend;
-    filetosend.open(file.c_str(),std::ios::binary);
-    
-    std::stringstream responseStream;
-    std::string responseMessage;
+    filetosend.open(file.c_str(), std::ios::binary);
     
     if(filetosend){
         
@@ -155,13 +166,23 @@ void connection::send_file(std::string filename, std::string path){
         getfilesize.close();
         getfilesize.clear();
         
-        responseStream << "KLCP/0.0.1 200 OK" << std::endl << "Content-Type: file" << std::endl << "Content-Length: " << filesize << std::endl << "Block-Size: " << 512 << std::endl << "Block-Count: " << blockcount << std::endl << std::endl;
+        klcp response;
         
-        responseMessage = responseStream.str();
-        std::cout << responseMessage;
         clearBuffer();
-        strcpy(buffer, responseMessage.c_str());
+        
+        response.setString("type", "file");
+        response.setString("filename", filename);
+        response.setInt("size", (int) filesize);
+        response.setInt("blocksize", 512);
+        response.setInt("blockcount", blockcount);
+        response.setString("msg", "nuthin");
+        
+        strcpy(buffer, response.msgSerialize().c_str());
+        
+        std::cout << "SEIZ:" << sizeof(buffer);
+        
         write(connection_socket, buffer, sizeof(buffer));
+        
         
         /* Read data from file and send it */
         char filebuffer[512];
@@ -183,15 +204,26 @@ void connection::send_file(std::string filename, std::string path){
         std::cout << "file Send Done";
         
     }else{
-        responseStream << "KLCP/0.0.1 404 FILE NOT FOUND" << std::endl << std::endl;
-        
-        responseMessage = responseStream.str();
-        
-        clearBuffer();
-        strcpy(buffer, responseMessage.c_str());
-        write(connection_socket, buffer, sizeof(buffer));
+        send_message("File not found");
     }
     
+}
+
+void connection::getFile(klcp request2, std::string filepath){
+    send_message("OK");
+    std::stringstream ss;
+    ss << filepath << "/" << request2.getString("filename");
+    std::string file = ss.str();
+    ss.clear();
+    
+    std::ofstream filetosave;
+    filetosave.open(file.c_str(), std::ofstream::binary);
+    
+    char filebuffer[request2.getInt("blocksize")];
+    for(int i = 0; i < request2.getInt("blockcount"); i++){
+        read(connection_socket, filebuffer, sizeof(filebuffer));
+        filetosave.write(filebuffer, sizeof(filebuffer));
+    }
 }
 
 void connection::close_connection(){
@@ -199,5 +231,5 @@ void connection::close_connection(){
 }
 
 void connection::quit_server(){
-    close(create_socket);
+    close(connection_socket);
 }

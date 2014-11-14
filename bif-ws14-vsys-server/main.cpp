@@ -27,7 +27,7 @@
 
 int main(int argc, char **argv){
     
-    if(argc<3){
+    if(argc<5){
         std::cout << "ERROR: noth enough Argumetns!" << std::endl;
         std::cout << "Usage: ./vsys-server PORT FILEPATH" << std::endl;
         return EXIT_FAILURE;
@@ -36,11 +36,14 @@ int main(int argc, char **argv){
     std::vector<std::string> args(argv + 1, argv + argc);
     
     std::string type = args[0];
+    
+//    type = "client";
+    
     std::string adress = args[1];
     int port = stoi(args[2]);
     std::string filepath = args[3];
     
-    std::cout << "VSYS SERVER" << std::endl << "\t Port: " << port << std::endl << "\t Filepath: " << filepath << std::endl << "===" << std::endl << std::endl;
+    std::cout << "VSYS SERVER/CLIENT" << std::endl << "\t Mode: " << type << std::endl << "\t Adress: " << adress << std::endl << "\t Port: " << port << std::endl << "\t Filepath: " << filepath << std::endl << "===" << std::endl << std::endl;
     
     if(type == "server"){
         server(port, filepath);

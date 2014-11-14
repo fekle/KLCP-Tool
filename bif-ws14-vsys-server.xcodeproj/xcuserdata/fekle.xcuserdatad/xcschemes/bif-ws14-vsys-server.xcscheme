@@ -59,7 +59,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "server"
+            argument = "client"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -71,7 +71,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "$(SRCROOT)/Files"
+            argument = "$(SRCROOT)/ClientFiles"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

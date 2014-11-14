@@ -15,24 +15,31 @@ void server(int port, std::string filepath){
     while(1){
         std::cout << "Waiting for connections..." << std::endl;
         conn.new_server_connection();
+        conn.send_message("HI");
         
         do{
             std::cout << std::endl << "Wating for message... " << std::endl;
             conn.recieve_message();
             std::string requestType = conn.request.getString("type");
             
-            if(requestType == "LIST"){
-                conn.send_message(filesInDir(filepath));
-            }else if(requestType == "GET"){
-                conn.send_file(conn.request.getString("path"), filepath);
-            }else if(requestType == "QUIT"){
-                conn.send_message("BYE!");
-            }else{
-                conn.send_message("Invalid Command");
+            if(requestType == "message"){
+                std::cout << conn.request.getString("msg") << std::endl;
+            }else if(requestType == "command"){
+                std::string command = conn.request.getString("msg");
+                if(command == "LIST"){
+                    conn.send_message(filesInDir(filepath));
+                }else if (command == "GET"){
+                    conn.send_file(conn.request.getString("value"), filepath);
+                }else if(command == "QUIT"){
+                    conn.send_message("BYE!");
+                }else{
+                    conn.send_message("Invalid command!");
+                }
+            }else if(requestType == "file"){
+                conn.getFile(conn.request, filepath);
             }
             
-            
-        }while(conn.request.getString("type") != "QUIT");
+        }while(conn.request.getString("msg") != "QUIT");
         
         conn.close_connection();
         
