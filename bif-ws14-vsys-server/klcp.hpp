@@ -75,8 +75,7 @@ void klcp::msgParse(std::string _json){
 }
 
 std::string klcp::msgSerialize(){
-    msg.put("protocol", "klcp");
-    msg.put("version", "0.0.1");
+    msg.put("protocol", "klcp/0.0.1");
   //  msg.put("length", msg.get<std::string>("msg").size());
     std::strstream _json;
     try{

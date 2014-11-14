@@ -60,7 +60,7 @@ public:
 };
 
 void connection::clearBuffer(){
-    memset(buffer, '\0', BUF);
+    memset(buffer, 0, BUF);
 }
 
 connection::connection(int port){
