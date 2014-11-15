@@ -13,77 +13,92 @@
 #include <string>
 #include <map>
 #include <strstream>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
-using namespace boost::property_tree;
+#define BUF 1000
+#define FILEBUF 100000
 
 class klcp{
 private:
-    ptree msg;
+    std::map<std::string, std::string> headers;
+    char buffer[BUF];
 public:
     klcp();
-    void setInt(std::string, int);
-    void setString(std::string, std::string);
-    void setDouble(std::string, double);
     
-    int getInt(std::string);
-    std::string getString(std::string);
-    double getDouble(std::string);
+    void set(std::string, std::string);
+    void setLong(std::string, unsigned long);
+    std::string get(std::string);
+    unsigned long getLong(std::string);
     
-    void msgParse(std::string);
-    std::string msgSerialize();
+    void recieve(int*);
+    void send(int*);
 };
 
 klcp::klcp(){
- //   std::cout << "BANANE OIDA";
+    memset(buffer, 0, BUF);
+    headers["version"] = "0.0.1";
 }
 
-void klcp::setInt(std::string _key, int _val){
-    msg.put(_key, _val);
+void klcp::set(std::string key, std::string val){
+    headers[key] = val;
 }
 
-void klcp::setString(std::string _key, std::string _val){
-    msg.put(_key, _val);
+void klcp::setLong(std::string key, unsigned long val){
+    headers[key] = std::to_string(val);
 }
 
-void klcp::setDouble(std::string _key, double _val){
-    msg.put(_key, _val);
+std::string klcp::get(std::string key){
+    return headers[key];
 }
 
-int klcp::getInt(std::string _key){
-    return msg.get<int>(_key);
+unsigned long klcp::getLong(std::string key){
+    std::string val = headers[key];
+    return std::stoi(val);
 }
 
-std::string klcp::getString(std::string _key){
-    return msg.get<std::string>(_key);
-}
-
-double klcp::getDouble(std::string _key){
-    return msg.get<double>(_key);
-}
-
-void klcp::msgParse(std::string _json){
-    std::strstream is;
-    is << _json;
-    try{
-        read_json(is, msg);
-    }catch(std::exception const& e){
-        std::cout << _json;
-        std::cout << "KLCP PARSE ERROR: " << e.what() << std::endl;
+void klcp::recieve(int* socket){
+    std::vector<std::string> lines;
+    read(*socket, buffer, BUF);
+    std::cout << std::endl << "Recieving: " << std::endl << buffer << std::endl;
+    std::stringstream msg(buffer);
+    std::stringstream msg2;
+    std::string line;
+    std::string linepart;
+    
+    while(std::getline(msg, line, '\n')){
+        std::string key;
+        std::string val;
+        unsigned int i = 0;
+        std::stringstream linestream(line);
+        while(std::getline(linestream, linepart, ':')){
+            switch(i){
+                case 0:
+                    key = linepart;
+                    break;
+                case 1:
+                    val = linepart;
+                    break;
+            }
+            i++;
+        }
+        headers[key] = val;
     }
 }
 
-std::string klcp::msgSerialize(){
-    msg.put("protocol", "klcp/0.0.1");
-  //  msg.put("length", msg.get<std::string>("msg").size());
-    std::strstream _json;
-    try{
-        write_json(_json, msg);
-    }catch(std::exception const& e){
-        std::cout << "KLCP SERIALIZE ERROR: " << e.what() << std::endl;
+void klcp::send(int* socket){
+    std::stringstream msgstream;
+    std::string msg;
+    
+    for (const std::pair<std::string, std::string> header: headers) {
+        msgstream << header.first << ":" << header.second << "\n";
     }
-    return _json.str();
+    
+    msg = msgstream.str();
+    std::copy(msg.begin(), msg.end(), buffer);
+    
+    std::cout << std::endl << "Sending: " << std::endl << buffer << std::endl;
+    
+    write(*socket, buffer, BUF);
 }
+
+
 
 #endif /* defined(__bif_ws14_vsys_server__klcp__) */

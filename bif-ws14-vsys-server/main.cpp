@@ -21,9 +21,6 @@
 #include "connection.hpp"
 #include "server.hpp"
 #include "client.hpp"
-#define BUF 1024
-
-
 
 int main(int argc, char **argv){
     

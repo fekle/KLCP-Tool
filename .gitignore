@@ -1,2 +1,4 @@
 /bif-ws14-vsys-server/build/*
 /bif-ws14-vsys-server.xcodeproj/project.xcworkspace/xcuserdata/*
+/bif-ws14-vsys-server/ServerFiles/*
+/bif-ws14-vsys-server/ClientFiles/*

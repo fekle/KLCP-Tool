@@ -8,7 +8,6 @@
 
 #ifndef bif_ws14_vsys_server_client_hpp
 #define bif_ws14_vsys_server_client_hpp
-#define BUF 1024
 
 void client(std::string adress, int port, std::string filepath){
     connection conn;
@@ -22,12 +21,12 @@ void client(std::string adress, int port, std::string filepath){
         
         conn.recieve_message();
         
-        std::string requestType = conn.request.getString("type");
+        std::string requestType = conn.request.get("type");
         
         if(requestType == "message"){
-            std::cout << std::endl << "Message by Server:" << std::endl << "===" << std::endl << "" << conn.request.getString("msg") << std::endl << "===" << std::endl;
+            std::cout << std::endl << "Message by Server:" << std::endl << "===" << std::endl << "" << conn.request.get("msg") << std::endl << "===" << std::endl;
         }else if(requestType == "command"){
-            std::string command = conn.request.getString("msg");
+            std::string command = conn.request.get("msg");
             if(command == "LIST"){
                // conn.send_message(filesInDir(filepath));
             }else if (command == "GET"){
@@ -55,6 +54,7 @@ void client(std::string adress, int port, std::string filepath){
             break;
         }
         
+        conn.clearBuffer();
         
     }while(true);
 }

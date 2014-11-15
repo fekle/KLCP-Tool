@@ -24,7 +24,10 @@
 #include <cmath>
 #include "common.hpp"
 #include "klcp.hpp"
-#define BUF 1024
+#include <chrono>
+#include <thread>
+#define BUF 1000
+#define FILEBUF 100000
 
 #ifndef connection_connection_h
 #define connection_connection_h
@@ -38,8 +41,8 @@ private:
     socklen_t addrlen;
     int size;
     struct sockaddr_in address, cliaddress;
-    void clearBuffer();
 public:
+    void clearBuffer();
     klcp request;
     char buffer[BUF];
     connection(int);
@@ -50,6 +53,7 @@ public:
     void recieve_binary();
     void send_message(std::string);
     void send_command(std::string, std::string);
+    void send_klcp(klcp);
     void send_file(std::string, std::string);
     void getFile(klcp, std::string);
     void close_connection();
@@ -60,7 +64,7 @@ public:
 };
 
 void connection::clearBuffer(){
-    memset(buffer, 0, BUF);
+    memset(buffer, NULL, BUF);
 }
 
 connection::connection(int port){
@@ -116,31 +120,29 @@ void connection::new_client_connection(int port, std::string _adress){
 }
 
 void connection::recieve_message(){
-    clearBuffer();
-    read(connection_socket, buffer, sizeof(buffer));
-    std::string rcvmsg(buffer);
-    request.msgParse(rcvmsg);
+    request.recieve(&connection_socket);
 }
 
 void connection::send_message(std::string message){
-    clearBuffer();
     klcp response;
-    response.setString("type", "message");
-    response.setString("msg", message);
-    
-    strcpy(buffer, response.msgSerialize().c_str());
-    write(connection_socket, buffer, sizeof(buffer));
+    response.set("type", "message");
+    response.set("msg", message);
+
+    response.send(&connection_socket);
+}
+
+void connection::send_klcp(klcp _klcp){
+    _klcp.send(&connection_socket);
 }
 
 void connection::send_command(std::string cmd, std::string val){
     clearBuffer();
     klcp response;
-    response.setString("type", "command");
-    response.setString("msg", cmd);
-    response.setString("value", val);
+    response.set("type", "command");
+    response.set("command", cmd);
+    response.set("value", val);
     
-    strcpy(buffer, response.msgSerialize().c_str());
-    write(connection_socket, buffer, sizeof(buffer));
+    response.send(&connection_socket);
 }
 
 void connection::send_file(std::string filename, std::string path){
@@ -152,7 +154,7 @@ void connection::send_file(std::string filename, std::string path){
     ss.clear();
     
     std::ifstream filetosend;
-    filetosend.open(file.c_str(), std::ios::binary);
+    filetosend.open(file.c_str(), std::ifstream::binary);
     
     if(filetosend){
         
@@ -160,47 +162,58 @@ void connection::send_file(std::string filename, std::string path){
         getfilesize.open(file.c_str(),std::ios::ate);
         
         unsigned long filesize = getfilesize.tellg();
-        unsigned int blockcount = ceil((float) filesize / 512);
+        unsigned long blockcount = ceil((float) filesize / FILEBUF);
+        unsigned long lastBlockSize = filesize % FILEBUF;
         
         getfilesize.close();
         getfilesize.clear();
         
-        klcp response;
         
         clearBuffer();
+        klcp response;
+        response.set("type", "file");
+        response.set("filename", filename);
+        response.setLong("filesize", filesize);
+        response.setLong("blocksize", FILEBUF);
+        response.setLong("blockcount", blockcount);
+        response.setLong("lastblocksize", lastBlockSize);
         
-        response.setString("type", "file");
-        response.setString("filename", filename);
-        response.setInt("size", (int) filesize);
-        response.setInt("blocksize", 512);
-        response.setInt("blockcount", blockcount);
-        response.setString("msg", "nuthin");
+        response.send(&connection_socket);
         
-        strcpy(buffer, response.msgSerialize().c_str());
+        char FileBuffer[FILEBUF];
         
-        std::cout << "SEIZ:" << sizeof(buffer);
-        
-        write(connection_socket, buffer, sizeof(buffer));
-        
-        
-        /* Read data from file and send it */
-        char filebuffer[512];
-        while (filetosend.read(filebuffer, 512)){
-            write(connection_socket, filebuffer, filetosend.gcount());
-        }
-        
-        if (filetosend.eof()){
-            if (filetosend.gcount() > 0){
-                // Still a few bytes left to write
-                write(connection_socket, filebuffer, filetosend.gcount());
+        for(unsigned long block = 0; block < blockcount; block++){
+            
+            unsigned long blocksize = FILEBUF;
+            if(block == (blockcount-1)){
+                blocksize = lastBlockSize;
+            };
+            
+            float progress = ((float)block / (float)blockcount);
+            
+            int barWidth = 70;
+            
+            std::cout << "[";
+            int pos = barWidth * progress;
+            for (int i = 0; i < barWidth; ++i) {
+                if (i < pos) std::cout << "=";
+                else if (i == pos) std::cout << ">";
+                else std::cout << " ";
             }
-        }else if (filetosend.bad()){
-            // Error reading
+            std::cout << "] " << round(progress*100.0) << "%\r";
+            std::cout.flush();
+            
+            filetosend.read(FileBuffer, blocksize);
+            writen(connection_socket, FileBuffer, blocksize);
         }
         
         filetosend.close();
-        filetosend.clear();
-        std::cout << "file Send Done";
+        
+        
+        std::cout << std::endl << std::endl;
+
+
+        send_message("File Send Done!");
         
     }else{
         send_message("File not found");
@@ -209,20 +222,50 @@ void connection::send_file(std::string filename, std::string path){
 }
 
 void connection::getFile(klcp request2, std::string filepath){
-    send_message("OK");
+
     std::stringstream ss;
-    ss << filepath << "/" << request2.getString("filename");
+    ss << filepath << "/" << request2.get("filename");
     std::string file = ss.str();
     ss.clear();
     
-    std::ofstream filetosave;
+std::ofstream filetosave;
     filetosave.open(file.c_str(), std::ofstream::binary);
     
-    char filebuffer[request2.getInt("blocksize")];
-    for(int i = 0; i < request2.getInt("blockcount"); i++){
-        read(connection_socket, filebuffer, sizeof(filebuffer));
-        filetosave.write(filebuffer, sizeof(filebuffer));
+    unsigned long _blocksize = request.getLong("blocksize");
+    unsigned long blockcount = request.getLong("blockcount");
+    unsigned long lastBlockSize = request.getLong("lastblocksize");
+    
+    char FileBuffer[FILEBUF];
+    for(unsigned long block = 0; block < blockcount; block++){
+
+        unsigned long blocksize = FILEBUF;
+        if(block == (blockcount-1)){
+            blocksize = lastBlockSize;
+        };
+        
+        float progress = ((float)block / (float)blockcount);
+        
+        int barWidth = 70;
+        
+        std::cout << "[";
+        int pos = barWidth * progress;
+        for (int i = 0; i < barWidth; ++i) {
+            if (i < pos) std::cout << "=";
+            else if (i == pos) std::cout << ">";
+            else std::cout << " ";
+        }
+        std::cout << "] " << round(progress*100.0) << "%\r";
+        std::cout.flush();
+        
+        readn(connection_socket, FileBuffer, blocksize);
+        filetosave.write(FileBuffer, blocksize);
+        
     }
+    
+    std::cout << std::endl << std::endl;
+    
+    send_message("Got The File!");
+    
 }
 
 void connection::close_connection(){

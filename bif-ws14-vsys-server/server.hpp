@@ -20,16 +20,16 @@ void server(int port, std::string filepath){
         do{
             std::cout << std::endl << "Wating for message... " << std::endl;
             conn.recieve_message();
-            std::string requestType = conn.request.getString("type");
+            std::string requestType = conn.request.get("type");
             
             if(requestType == "message"){
-                std::cout << conn.request.getString("msg") << std::endl;
+                std::cout << conn.request.get("msg") << std::endl;
             }else if(requestType == "command"){
-                std::string command = conn.request.getString("msg");
+                std::string command = conn.request.get("command");
                 if(command == "LIST"){
                     conn.send_message(filesInDir(filepath));
                 }else if (command == "GET"){
-                    conn.send_file(conn.request.getString("value"), filepath);
+                    conn.send_file(conn.request.get("value"), filepath);
                 }else if(command == "QUIT"){
                     conn.send_message("BYE!");
                 }else{
@@ -39,7 +39,9 @@ void server(int port, std::string filepath){
                 conn.getFile(conn.request, filepath);
             }
             
-        }while(conn.request.getString("msg") != "QUIT");
+            conn.clearBuffer();
+            
+        }while(conn.request.get("command") != "QUIT");
         
         conn.close_connection();
         
@@ -47,6 +49,7 @@ void server(int port, std::string filepath){
             std::cout << "Client told me to quit, I obey." << std::endl;
             break;
         }
+        
     }
     
     conn.quit_server();
