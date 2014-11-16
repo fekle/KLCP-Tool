@@ -9,7 +9,6 @@
 #ifndef bif_ws14_vsys_server_connection_hpp
 #define bif_ws14_vsys_server_connection_hpp
 
-
 void *serverThread(int, std::string);
 
 void server(int port, std::string filepath){

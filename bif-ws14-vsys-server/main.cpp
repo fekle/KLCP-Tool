@@ -36,7 +36,7 @@ int main(int argc, char **argv){
 
     std::stringstream ss;
 
-    ss << BOLDWHITE << "VSYS SERVER/CLIENT" << std::endl << "\t Mode: " << type << std::endl << "\t Adress: " << adress << std::endl << "\t Port: " << port << std::endl << "\t Filepath: " << filepath << std::endl << "===" << std::endl << std::endl << RESET;
+    ss << BOLDWHITE << "VSYS SERVER/CLIENT" << std::endl << "\t Mode: " << type << std::endl << "\t Adress: " << adress << std::endl << "\t Port: " << port << std::endl << "\t Filepath: " << filepath << std::endl << RESET;
 
     printInfo(ss.str());
 
