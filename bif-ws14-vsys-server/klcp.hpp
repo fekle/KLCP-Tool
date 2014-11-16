@@ -7,6 +7,8 @@
 //
 
 #include <map>
+#include <cstring>
+
 
 #ifndef __bif_ws14_vsys_server__klcp__
 #define __bif_ws14_vsys_server__klcp__
