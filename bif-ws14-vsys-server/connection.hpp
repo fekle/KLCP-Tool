@@ -24,6 +24,7 @@
 #include <cmath>
 #include <thread>
 #include "klcp.hpp"
+#include <cstring>
 #define BUF 1000
 #define FILEBUF 100000
 
