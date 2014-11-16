@@ -6,15 +6,14 @@
 //  Copyright (c) 2014 Aleksandar Lepojic, Felix Klein. All rights reserved.
 //
 
+#include <map>
+
 #ifndef __bif_ws14_vsys_server__klcp__
 #define __bif_ws14_vsys_server__klcp__
 
-#include <stdio.h>
-#include <string>
-#include <map>
-#include <strstream>
 #define BUF 1000
 #define FILEBUF 100000
+
 
 class klcp{
 private:
@@ -27,9 +26,10 @@ public:
     void setLong(std::string, unsigned long);
     std::string get(std::string);
     unsigned long getLong(std::string);
-    
-    void recieve(int*);
-    void send(int*);
+
+    bool recieve(int *);
+
+    bool send(int *);
 };
 
 klcp::klcp(){
@@ -51,39 +51,51 @@ std::string klcp::get(std::string key){
 
 unsigned long klcp::getLong(std::string key){
     std::string val = headers[key];
-    return std::stoi(val);
+    return std::stoul(val);
 }
 
-void klcp::recieve(int* socket){
-    std::vector<std::string> lines;
-    read(*socket, buffer, BUF);
-    std::cout << std::endl << "Recieving: " << std::endl << buffer << std::endl;
-    std::stringstream msg(buffer);
-    std::stringstream msg2;
-    std::string line;
-    std::string linepart;
-    
-    while(std::getline(msg, line, '\n')){
-        std::string key;
-        std::string val;
-        unsigned int i = 0;
-        std::stringstream linestream(line);
-        while(std::getline(linestream, linepart, ':')){
-            switch(i){
-                case 0:
-                    key = linepart;
-                    break;
-                case 1:
-                    val = linepart;
-                    break;
+bool klcp::recieve(int *socket) {
+
+    ssize_t x = readn(*socket, buffer, BUF);
+
+    if (x <= 0) {
+        printError("Failed to read from socket or client/server disconnected.");
+
+        return false;
+    } else {
+
+        std::stringstream msg(buffer);
+        std::string line;
+        std::string linepart;
+
+        while (std::getline(msg, line, '\n')) {
+            std::string key;
+            std::string val;
+            unsigned int i = 0;
+            std::stringstream linestream(line);
+            while (std::getline(linestream, linepart, ':')) {
+                switch (i) {
+                    case 0:
+                        key = linepart;
+                        break;
+                    case 1:
+                        val = linepart;
+                        break;
+                    default:
+                        key = "";
+                        val = "";
+                        break;
+                }
+                i++;
             }
-            i++;
+            headers[key] = val;
         }
-        headers[key] = val;
+
+        return true;
     }
 }
 
-void klcp::send(int* socket){
+bool klcp::send(int *socket) {
     std::stringstream msgstream;
     std::string msg;
     
@@ -93,10 +105,16 @@ void klcp::send(int* socket){
     
     msg = msgstream.str();
     std::copy(msg.begin(), msg.end(), buffer);
-    
-    std::cout << std::endl << "Sending: " << std::endl << buffer << std::endl;
-    
-    write(*socket, buffer, BUF);
+
+    ssize_t x = writen(*socket, buffer, BUF);
+
+    if (x <= 0) {
+        printError("Failed to write to socket or client/server disconnected.");
+
+        return false;
+    } else {
+        return true;
+    }
 }
 
 

@@ -9,50 +9,130 @@
 #ifndef bif_ws14_vsys_server_connection_hpp
 #define bif_ws14_vsys_server_connection_hpp
 
+
+void *serverThread(int, std::string);
+
 void server(int port, std::string filepath){
-    connection conn(port);
-    
-    while(1){
-        std::cout << "Waiting for connections..." << std::endl;
-        conn.new_server_connection();
-        conn.send_message("HI");
-        
-        do{
-            std::cout << std::endl << "Wating for message... " << std::endl;
-            conn.recieve_message();
-            std::string requestType = conn.request.get("type");
-            
-            if(requestType == "message"){
-                std::cout << conn.request.get("msg") << std::endl;
-            }else if(requestType == "command"){
-                std::string command = conn.request.get("command");
-                if(command == "LIST"){
-                    conn.send_message(filesInDir(filepath));
-                }else if (command == "GET"){
-                    conn.send_file(conn.request.get("value"), filepath);
-                }else if(command == "QUIT"){
-                    conn.send_message("BYE!");
-                }else{
-                    conn.send_message("Invalid command!");
-                }
-            }else if(requestType == "file"){
-                conn.getFile(conn.request, filepath);
-            }
-            
-            conn.clearBuffer();
-            
-        }while(conn.request.get("command") != "QUIT");
-        
-        conn.close_connection();
-        
-        if(strncmp(conn.buffer, "quitall", 7)  == 0){
-            std::cout << "Client told me to quit, I obey." << std::endl;
+
+    socklen_t addrlen;
+    struct sockaddr_in address, cliaddress;
+
+    int listen_socket = socket(AF_INET, SOCK_STREAM, 0);
+    int optval = 1;
+    setsockopt(listen_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(port);
+
+    if (bind(listen_socket, (struct sockaddr *) &address, sizeof(address)) != 0) {
+        std::stringstream error;
+        error << "BIND ERROR - Could not bind to Port " << port << ": " << strerror(errno);
+        printError(error.str());
+    } else {
+        listen(listen_socket, 5);
+        addrlen = sizeof(struct sockaddr_in);
+    }
+
+    do {
+
+        int sock = accept(listen_socket, (struct sockaddr *) &cliaddress, &addrlen);
+        if (sock > 0) {
+            std::stringstream info;
+            info << "Client connected from " << inet_ntoa(cliaddress.sin_addr) << ":" << ntohs(cliaddress.sin_port);
+            printInfo(info.str());
+
+            std::thread x(serverThread, sock, filepath);
+            x.detach();
+        } else {
+            printError("Connection Failed!");
+        }
+
+
+    } while (true);
+
+    close(listen_socket);
+}
+
+void *serverThread(int sock, std::string filepath) {
+    int id = rand() % 1000 + 1;
+    std::string command;
+    connection conn(sock);
+    conn.send_message("Welcome to MyServer! Please Log In!");
+
+    do {
+
+        klcp login = conn.recieve();
+
+        if (conn.error) {
             break;
         }
-        
-    }
-    
-    conn.quit_server();
+
+        if (login.get("type") == "login") {
+
+            std::string user = login.get("username");
+            std::string pass = login.get("password");
+
+            //auth by alex
+            bool valid = true;
+
+            if (valid) {
+
+                conn.send_message("Welcome!");
+
+                if (conn.error) {
+                    break;
+                }
+
+                do {
+                    command = "";
+                    std::stringstream hi;
+                    hi << "Waiting for Client in thread #" << id;
+                    printInfo(hi.str());
+
+                    klcp msg = conn.recieve();
+
+                    if (conn.error) {
+                        break;
+                    }
+
+                    std::string requestType = msg.get("type");
+
+                    if (requestType == "message") {
+                        printMsg(msg.get("msg"));
+                    } else if (requestType == "command") {
+                        command = msg.get("command");
+                        std::stringstream info;
+                        info << "Client sent command: " << command << " " << msg.get("value");
+                        printInfo(info.str());
+                        if (command == "LIST") {
+                            conn.send_message(filesInDir(filepath));
+                        } else if (command == "GET") {
+                            conn.send_file(msg.get("value"), filepath);
+                        } else {
+                            conn.send_message("Invalid command!");
+                        }
+                    } else if (requestType == "file") {
+                        conn.getFile(msg, filepath);
+                        conn.send_message("got it");
+                    }
+
+                    conn.clearBuffer();
+
+                } while (command != "QUIT" && command != "QUITALL" && !conn.error);
+            } else {
+                conn.send_message("Invalid Credentials");
+            }
+        } else {
+            conn.send_message("Please Log in");
+        }
+
+    } while (command != "QUIT" && command != "QUITALL" && !conn.error);
+
+    conn.close_connection();
+
+    return 0;
 }
 
 #endif

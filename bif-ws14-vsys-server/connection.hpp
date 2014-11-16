@@ -22,10 +22,8 @@
 #include <dirent.h>
 #include <unordered_map>
 #include <cmath>
-#include "common.hpp"
-#include "klcp.hpp"
-#include <chrono>
 #include <thread>
+#include "klcp.hpp"
 #define BUF 1000
 #define FILEBUF 100000
 
@@ -38,70 +36,40 @@
 class connection{
 private:
     int connection_socket;
-    socklen_t addrlen;
-    int size;
-    struct sockaddr_in address, cliaddress;
 public:
+    bool skip = false;
     void clearBuffer();
-    klcp request;
     char buffer[BUF];
     connection(int);
     connection();
-    void new_server_connection();
     void new_client_connection(int, std::string);
-    void recieve_message();
-    void recieve_binary();
+
+    klcp recieve();
     void send_message(std::string);
+
+    void send_command(std::string);
     void send_command(std::string, std::string);
-    void send_klcp(klcp);
+
+    void send_login(std::string, std::string);
     void send_file(std::string, std::string);
     void getFile(klcp, std::string);
     void close_connection();
-    void quit_server();
-    std::string lastMessage;
-    bool error = true; // true=error, false=ok
+
+    bool error = false; // true=error, false=ok
     std::string errormsg;
 };
 
-void connection::clearBuffer(){
-    memset(buffer, NULL, BUF);
-}
-
-connection::connection(int port){
-    connection_socket = socket(AF_INET, SOCK_STREAM, 0);
-    int optval = 1;
-    setsockopt(connection_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
-    
-    memset(&address,0,sizeof(address));
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(port);
-    
-    if(bind(connection_socket, (struct sockaddr *) &address, sizeof(address)) != 0){
-        error = true;
-        std::cerr << "BIND ERROR - Could not bind to Port " << port << ": " << strerror(errno) << std::endl;
-    }else{
-        error = false;
-        listen(connection_socket, 5);
-        
-        addrlen = sizeof(struct sockaddr_in);
-    }
-};
-
-connection::connection(){
-    connection_socket = socket(AF_INET, SOCK_STREAM, 0);
-    int optval = 1;
-    setsockopt(connection_socket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
-}
-
-void connection::new_server_connection(){
-    connection_socket = accept(connection_socket, (struct sockaddr *) &cliaddress, &addrlen);
-    if(connection_socket > 0){
-        std::cout << "Client connected from " << inet_ntoa(cliaddress.sin_addr) << ":" << ntohs(cliaddress.sin_port) << std::endl;
-    }else{
-        std::cout << "whoops";
-    }
+connection::connection() {
     clearBuffer();
+}
+
+void connection::clearBuffer(){
+//    memset(buffer, 0, BUF);
+    bzero(buffer, BUF);
+}
+
+connection::connection(int socket) {
+    connection_socket = socket;
 }
 
 void connection::new_client_connection(int port, std::string _adress){
@@ -112,28 +80,55 @@ void connection::new_client_connection(int port, std::string _adress){
     inet_aton(_adress.c_str(), &address.sin_addr);
     
     if(connect(connection_socket, (struct sockaddr *) &address, sizeof(address)) == 0){
-        std::cout << "Success!";
+        error = false;
+        printInfo("Connected!");
     }else{
-        std::cout << "connection failed!";
+        error = true;
+        printError("Connection Failed!");
     }
     clearBuffer();
 }
 
-void connection::recieve_message(){
-    request.recieve(&connection_socket);
+klcp connection::recieve() {
+    klcp request;
+
+    if (request.recieve(&connection_socket)) {
+
+        if (request.get("type") == "message") {
+            long msglength = atol(request.get("length").c_str());
+            char msgBuffer[msglength];
+
+            readn(connection_socket, msgBuffer, msglength);
+
+            std::string msg(msgBuffer);
+            request.set("msg", msg);
+        }
+
+        error = false;
+    } else {
+        error = true;
+        errormsg = "recieve failed";
+    }
+
+    return request;
 }
 
 void connection::send_message(std::string message){
+    unsigned long msglength = message.size();
+    char msgBuffer[msglength];
+    std::copy(message.begin(), message.end(), msgBuffer);
     klcp response;
     response.set("type", "message");
-    response.set("msg", message);
+    response.set("length", std::to_string(msglength));
 
-    response.send(&connection_socket);
+    if (response.send(&connection_socket)) {
+        writen(connection_socket, msgBuffer, msglength);
+    } else {
+        error = true;
+        errormsg = "send failed";
+    }
 }
 
-void connection::send_klcp(klcp _klcp){
-    _klcp.send(&connection_socket);
-}
 
 void connection::send_command(std::string cmd, std::string val){
     clearBuffer();
@@ -141,8 +136,44 @@ void connection::send_command(std::string cmd, std::string val){
     response.set("type", "command");
     response.set("command", cmd);
     response.set("value", val);
-    
-    response.send(&connection_socket);
+
+    if (response.send(&connection_socket)) {
+        error = false;
+    } else {
+        error = true;
+        errormsg = "send failed";
+    }
+}
+
+void connection::send_command(std::string cmd) {
+    clearBuffer();
+    klcp response;
+    response.set("type", "command");
+    response.set("command", cmd);
+    response.set("value", "");
+
+    if (response.send(&connection_socket)) {
+        error = false;
+    } else {
+        error = true;
+        errormsg = "send failed";
+    }
+}
+
+
+void connection::send_login(std::string user, std::string pass) {
+    clearBuffer();
+    klcp response;
+    response.set("type", "login");
+    response.set("username", user);
+    response.set("password", pass);
+
+    if (response.send(&connection_socket)) {
+        error = false;
+    } else {
+        error = true;
+        errormsg = "send failed";
+    }
 }
 
 void connection::send_file(std::string filename, std::string path){
@@ -160,14 +191,13 @@ void connection::send_file(std::string filename, std::string path){
         
         std::ifstream getfilesize;
         getfilesize.open(file.c_str(),std::ios::ate);
-        
-        unsigned long filesize = getfilesize.tellg();
-        unsigned long blockcount = ceil((float) filesize / FILEBUF);
+
+        unsigned long filesize = (unsigned long) getfilesize.tellg();
+        unsigned long blockcount = (unsigned long) ceil((float) filesize / FILEBUF);
         unsigned long lastBlockSize = filesize % FILEBUF;
         
         getfilesize.close();
         getfilesize.clear();
-        
         
         clearBuffer();
         klcp response;
@@ -177,58 +207,72 @@ void connection::send_file(std::string filename, std::string path){
         response.setLong("blocksize", FILEBUF);
         response.setLong("blockcount", blockcount);
         response.setLong("lastblocksize", lastBlockSize);
-        
-        response.send(&connection_socket);
-        
-        char FileBuffer[FILEBUF];
-        
-        for(unsigned long block = 0; block < blockcount; block++){
-            
-            unsigned long blocksize = FILEBUF;
-            if(block == (blockcount-1)){
-                blocksize = lastBlockSize;
-            };
-            
-            float progress = ((float)block / (float)blockcount);
-            
-            int barWidth = 70;
-            
-            std::cout << "[";
-            int pos = barWidth * progress;
-            for (int i = 0; i < barWidth; ++i) {
-                if (i < pos) std::cout << "=";
-                else if (i == pos) std::cout << ">";
-                else std::cout << " ";
+
+        if (response.send(&connection_socket)) {
+            char FileBuffer[FILEBUF];
+
+            for (unsigned long block = 0; block < blockcount; block++) {
+
+                unsigned long blocksize = FILEBUF;
+                if (block == (blockcount - 1)) {
+                    blocksize = lastBlockSize;
+                };
+
+                float progress = ((float) block / (float) blockcount);
+
+                int barWidth = 60;
+
+                std::cout << BOLDGREEN << "Uploading... [";
+                int pos = (int) round(barWidth * progress);
+                if (block == blockcount - 1) {
+                    for (int i = 0; i < barWidth; ++i) {
+                        std::cout << "#";
+                    }
+                    std::cout << "] 100%\r" << RESET;
+                    std::cout.flush();
+                } else {
+                    for (int i = 0; i < barWidth; ++i) {
+                        if (i <= pos) std::cout << "#";
+                        else std::cout << "-";
+                    }
+                    std::cout << "] " << round(progress * 100.0) << "%\r" << RESET;
+                    std::cout.flush();
+                }
+
+
+                filetosend.read(FileBuffer, blocksize);
+                writen(connection_socket, FileBuffer, blocksize);
             }
-            std::cout << "] " << round(progress*100.0) << "%\r";
-            std::cout.flush();
-            
-            filetosend.read(FileBuffer, blocksize);
-            writen(connection_socket, FileBuffer, blocksize);
+
+            filetosend.close();
+
+
+            std::cout << std::endl << std::endl;
+
+            printInfo("File Upload Finished");
+            error = false;
+        } else {
+            error = true;
+            errormsg = "file send failed";
         }
-        
-        filetosend.close();
-        
-        
-        std::cout << std::endl << std::endl;
-
-
-        send_message("File Send Done!");
-        
     }else{
+        printError("File not Found!");
         send_message("File not found");
+        skip = true;
     }
-    
 }
 
-void connection::getFile(klcp request2, std::string filepath){
+void connection::getFile(klcp request, std::string filepath) {
 
     std::stringstream ss;
-    ss << filepath << "/" << request2.get("filename");
+    ss << filepath << "/" << request.get("filename");
     std::string file = ss.str();
     ss.clear();
+
+    std::ofstream filetosave;
+
+    std::cout << std::endl;
     
-std::ofstream filetosave;
     filetosave.open(file.c_str(), std::ofstream::binary);
     
     unsigned long _blocksize = request.getLong("blocksize");
@@ -236,42 +280,50 @@ std::ofstream filetosave;
     unsigned long lastBlockSize = request.getLong("lastblocksize");
     
     char FileBuffer[FILEBUF];
+
     for(unsigned long block = 0; block < blockcount; block++){
 
-        unsigned long blocksize = FILEBUF;
+        unsigned long blocksize = _blocksize;
         if(block == (blockcount-1)){
             blocksize = lastBlockSize;
         };
         
         float progress = ((float)block / (float)blockcount);
-        
-        int barWidth = 70;
-        
-        std::cout << "[";
-        int pos = barWidth * progress;
-        for (int i = 0; i < barWidth; ++i) {
-            if (i < pos) std::cout << "=";
-            else if (i == pos) std::cout << ">";
-            else std::cout << " ";
+
+        int barWidth = 60;
+
+        std::cout << BOLDGREEN << "Downloading... [";
+        int pos = (int) round(barWidth * progress);
+        if (block == blockcount - 1) {
+            for (int i = 0; i < barWidth; ++i) {
+                std::cout << "#";
+            }
+            std::cout << "] 100%\r" << RESET;
+            std::cout.flush();
+        } else {
+            for (int i = 0; i < barWidth; ++i) {
+                if (i <= pos) std::cout << "#";
+                else std::cout << "-";
+            }
+            std::cout << "] " << round(progress * 100.0) << "%\r" << RESET;
+            std::cout.flush();
         }
-        std::cout << "] " << round(progress*100.0) << "%\r";
-        std::cout.flush();
-        
-        readn(connection_socket, FileBuffer, blocksize);
-        filetosave.write(FileBuffer, blocksize);
-        
+
+
+        if (readn(connection_socket, FileBuffer, blocksize) == -1) {
+            error = true;
+            errormsg = "failed to read file";
+            break;
+        } else {
+            filetosave.write(FileBuffer, blocksize);
+        }
     }
-    
-    std::cout << std::endl << std::endl;
-    
-    send_message("Got The File!");
-    
+
+    std::cout << std::endl;
+    printInfo("File Download Finished");
+    error = false;
 }
 
 void connection::close_connection(){
-    close(connection_socket);
-}
-
-void connection::quit_server(){
     close(connection_socket);
 }

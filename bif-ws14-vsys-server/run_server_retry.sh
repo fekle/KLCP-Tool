@@ -1,6 +1,9 @@
-cd build
+#!/bin/bash
 while true
-do
+do	
+	make
+	cd build
 	./klcp_tool server localhost 6543 ../../ServerFiles
-	sleep 0.1
+	sleep 1
+	cd ..
 done

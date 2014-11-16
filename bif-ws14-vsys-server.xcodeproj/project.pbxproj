@@ -219,6 +219,7 @@
 					/usr/local/include/,
 					/usr/local/Cellar/boost/,
 				);
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "/usr/local/include/ /usr/local/Cellar/boost/";
 			};
@@ -234,6 +235,7 @@
 					/usr/local/include/,
 					/usr/local/Cellar/boost/,
 				);
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "/usr/local/include/ /usr/local/Cellar/boost/";
 			};
