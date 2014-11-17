@@ -20,7 +20,7 @@ void ldap_auth::print_hello() {
     std::cout << "Connecting with " << LDAP_HOST << " on port " << LDAP_PORT << std::endl;
 }
 
-bool establish_ldap_auth(std::string username, std::string password) {
+bool ldap_auth::establish_ldap_auth(std::string username, std::string password) {
 
     LDAP *ld;
     LDAPMessage *result, *e;
@@ -56,7 +56,7 @@ bool establish_ldap_auth(std::string username, std::string password) {
         rc = ldap_search_s(ld, SEARCHBASE, 0, s_filter.c_str(), attribs, 0, &result);
 
         if (rc != LDAP_SUCCESS) {
-            std::cout << "LDAP Search Error" << std::endl;
+            printError("LDAP Search Error");
             return EXIT_FAILURE;
         }
 
@@ -65,30 +65,35 @@ bool establish_ldap_auth(std::string username, std::string password) {
         if (ld_count_entries == 1) {
             e = ldap_first_entry(ld, result);
             strcat(dn, ldap_get_dn(ld, e));
-            std::cout << " DN from search: " << dn << std::endl;
-        }
-        else if (ld_count_entries == 0) {
-
-            std::stringstream dn;
-            dn << "uid=" << username << ",ou=People,dc=technikum-wien,dc=at";
-            std::string dn_string = dn.str();
-            std::cout << "Standard DN: " << dn_string << std::endl;
-        }
-        else {
-            std::cout << "Invalid number of results: " << ld_count_entries << std::endl;
+            std::stringstream ss;
+            ss << " DN from search: " << dn << std::endl;
+            printInfo(ss.str());
+        } else if (ld_count_entries == 0) {
+            std::stringstream ss;
+            ss << "uid=" << username << ",ou=People,dc=technikum-wien,dc=at";
+            std::string dn_string = ss.str();
+            std::copy(dn_string.begin(), dn_string.end(), dn);
+            printInfo(ss.str());
+        } else {
+            std::stringstream ss;
+            ss << "Invalid number of results: " << ld_count_entries << std::endl;
+            printError(ss.str());
             return EXIT_FAILURE;
         }
     }
     else {
+        printError("LDAP connection Failed");
         return EXIT_FAILURE;
     }
 
     int check_login = ldap_simple_bind_s(ld, dn, passed_password);
 
     if (check_login == LDAP_SUCCESS) {
+        printInfo("user logged in successfully");
         return true;
     }
     else {
+        printError("user wasnt able to log in");
         return false;
     }
 
