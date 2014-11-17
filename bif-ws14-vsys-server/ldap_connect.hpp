@@ -9,6 +9,11 @@
 #define BIND_PW NULL
 #define BANNED_FOR_TIME 60
 
+
+/**
+ * LDAP connection realised with one method.
+ * Also implying the banning function because of convenience.
+ */
 class ldap_auth {
 private:
     int login_attempts = 0;
@@ -16,22 +21,32 @@ public:
     bool establish_ldap_auth(std::string, std::string, std::string, banned_ip *);
 };
 
+/**
+* Taking username, password, ip address and an instance of the banning class as a parameter.
+* A connection is being established.
+* Anonymously bound to.
+* A search of the directories is being performed.
+* The credentials are then checked by a second LDAP binding with the password provided.
+* On successful credential checking, the client can pass and is welcomed to the server.
+* If three unsuccessful credential checks happen, the client is blocked for one minute.
+* The used variables for the LDAP connection are being freed.
+*/
 bool ldap_auth::establish_ldap_auth(std::string username, std::string password, std::string _ip_address, banned_ip *ban) {
 
     LDAP *ld;
     LDAPMessage *result, *e;
     char uid[] = "uid";
     char cn[] = "cn";
-    char *attribs[3];        /* attribute array for search */
-
-    attribs[0] = uid;            /* return uid and cn of entries */
+    char *attribs[3];
+    
+    attribs[0] = uid;
     attribs[1] = cn;
-    attribs[2] = NULL;        /* array must be NULL terminated */
+    attribs[2] = NULL;
 
     int rc = 0;
     int ld_count_entries = 0;
     const char *passed_password = password.c_str();
-    /* Setup LDAP Connection */
+
     if ((ld = ldap_init(LDAP_HOST, LDAP_PORT)) == NULL) {
         printError("Error initialising LDAP connection");
         return EXIT_FAILURE;
@@ -39,7 +54,7 @@ bool ldap_auth::establish_ldap_auth(std::string username, std::string password, 
 
     char dn[47] = "";
 
-    /* Anonymous bind */
+
     rc = ldap_simple_bind_s(ld, BIND_USER, BIND_PW);
 
     if (rc == LDAP_SUCCESS) {

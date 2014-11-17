@@ -31,7 +31,7 @@
 /**
 * Define buffers
 * The normal message buffer is 1000 bytes,
-* the file buffer ist 100 kilobytes (used for sending/recieving files)
+* the file buffer is 100 kilobytes (used for sending/recieving files)
 */
 #define BUF 1000
 #define FILEBUF 100000

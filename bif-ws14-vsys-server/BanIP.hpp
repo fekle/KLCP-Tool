@@ -16,9 +16,10 @@
 #include <sstream>
 #include "common.hpp"
 
-/*
- *  IP Class
- */
+/**
+* IP Class
+* Define time variables and handling of IP
+*/
 
 class IP {
 
@@ -53,7 +54,8 @@ time_t IP::getTimestamp() {
 }
 
 /*
- *  banned_ip Class
+ * banned_ip Class
+ * Define two bool methods for banning.
  */
 
 class banned_ip {
@@ -71,6 +73,12 @@ banned_ip::banned_ip() {
 
 }
 
+/**
+* Methods which takes care of the banning process.
+* Banned IP is being pushed into a vector data structure.
+* Banning time is set to one minute.
+* A proper comparison is set to unban the IP after the banning time has expired.
+*/
 bool banned_ip::the_ban(std::string _ip) {
 
     time_t time_right_now;
