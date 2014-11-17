@@ -13,9 +13,9 @@
 #include "server.hpp"
 #include "client.hpp"
 
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
 
-    if(argc<5){
+    if (argc < 5) {
         std::stringstream ss;
         ss << "ERROR: not enough Arguments!" << std::endl;
         ss << "Usage: ./vsys-server PORT FILEPATH";
@@ -42,11 +42,11 @@ int main(int argc, char **argv){
 
     ss.clear();
 
-    if(type == "server"){
+    if (type == "server") {
         server(port, filepath);
-    }else if(type == "client"){
+    } else if (type == "client") {
         client(adress, port, filepath);
-    }else{
+    } else {
         return EXIT_FAILURE;
     }
 

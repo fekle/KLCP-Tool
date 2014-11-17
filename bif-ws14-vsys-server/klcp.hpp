@@ -17,16 +17,19 @@
 #define FILEBUF 100000
 
 
-class klcp{
+class klcp {
 private:
     std::map<std::string, std::string> headers;
     char buffer[BUF];
 public:
     klcp();
-    
+
     void set(std::string, std::string);
+
     void setLong(std::string, unsigned long);
+
     std::string get(std::string);
+
     unsigned long getLong(std::string);
 
     bool recieve(int *);
@@ -34,24 +37,24 @@ public:
     bool send(int *);
 };
 
-klcp::klcp(){
+klcp::klcp() {
     memset(buffer, 0, BUF);
     headers["version"] = "0.0.1";
 }
 
-void klcp::set(std::string key, std::string val){
+void klcp::set(std::string key, std::string val) {
     headers[key] = val;
 }
 
-void klcp::setLong(std::string key, unsigned long val){
+void klcp::setLong(std::string key, unsigned long val) {
     headers[key] = std::to_string(val);
 }
 
-std::string klcp::get(std::string key){
+std::string klcp::get(std::string key) {
     return headers[key];
 }
 
-unsigned long klcp::getLong(std::string key){
+unsigned long klcp::getLong(std::string key) {
     std::string val = headers[key];
     return std::stoul(val);
 }
@@ -100,11 +103,11 @@ bool klcp::recieve(int *socket) {
 bool klcp::send(int *socket) {
     std::stringstream msgstream;
     std::string msg;
-    
+
     for (const std::pair<std::string, std::string> header: headers) {
         msgstream << header.first << ":" << header.second << "\n";
     }
-    
+
     msg = msgstream.str();
     std::copy(msg.begin(), msg.end(), buffer);
 
@@ -118,7 +121,6 @@ bool klcp::send(int *socket) {
         return true;
     }
 }
-
 
 
 #endif /* defined(__bif_ws14_vsys_server__klcp__) */

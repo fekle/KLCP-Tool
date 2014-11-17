@@ -9,7 +9,7 @@
 #ifndef bif_ws14_vsys_server_client_hpp
 #define bif_ws14_vsys_server_client_hpp
 
-void client(std::string adress, int port, std::string filepath){
+void client(std::string adress, int port, std::string filepath) {
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     int optval = 1;
@@ -79,7 +79,7 @@ void client(std::string adress, int port, std::string filepath){
             } else if (cmd == "QUITALL") {
                 conn.send_command("QUITALL");
                 printInfo("Bye!");
-            }else{
+            } else {
                 conn.skip = true;
                 printError("Invald Command!");
             }

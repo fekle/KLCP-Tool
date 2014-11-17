@@ -26,6 +26,7 @@
 #include "klcp.hpp"
 #include "common.hpp"
 #include <cstring>
+
 #define BUF 1000
 #define FILEBUF 100000
 
@@ -35,26 +36,36 @@
 
 #endif
 
-class connection{
+class connection {
 private:
     int connection_socket;
 public:
     bool skip = false;
+
     void clearBuffer();
+
     char buffer[BUF];
+
     connection(int);
+
     connection();
+
     void new_client_connection(int, std::string);
 
     klcp recieve();
+
     void send_message(std::string);
 
     void send_command(std::string);
+
     void send_command(std::string, std::string);
 
     void send_login(std::string, std::string);
+
     void send_file(std::string, std::string);
+
     void getFile(klcp, std::string);
+
     void close_connection();
 
     bool error = false; // true=error, false=ok
@@ -65,7 +76,7 @@ connection::connection() {
     clearBuffer();
 }
 
-void connection::clearBuffer(){
+void connection::clearBuffer() {
 //    memset(buffer, 0, BUF);
     bzero(buffer, BUF);
 }
@@ -74,17 +85,17 @@ connection::connection(int socket) {
     connection_socket = socket;
 }
 
-void connection::new_client_connection(int port, std::string _adress){
+void connection::new_client_connection(int port, std::string _adress) {
     struct sockaddr_in address;
-    memset(&address,0,sizeof(address));
+    memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
     address.sin_port = htons(port);
     inet_aton(_adress.c_str(), &address.sin_addr);
-    
-    if(connect(connection_socket, (struct sockaddr *) &address, sizeof(address)) == 0){
+
+    if (connect(connection_socket, (struct sockaddr *) &address, sizeof(address)) == 0) {
         error = false;
         printInfo("Connected!");
-    }else{
+    } else {
         error = true;
         printError("Connection Failed!");
     }
@@ -116,7 +127,7 @@ klcp connection::recieve() {
     return request;
 }
 
-void connection::send_message(std::string message){
+void connection::send_message(std::string message) {
     unsigned long msglength = message.size();
     char msgBuffer[msglength];
     std::copy(message.begin(), message.end(), msgBuffer);
@@ -133,7 +144,7 @@ void connection::send_message(std::string message){
 }
 
 
-void connection::send_command(std::string cmd, std::string val){
+void connection::send_command(std::string cmd, std::string val) {
     clearBuffer();
     klcp response;
     response.set("type", "command");
@@ -179,29 +190,29 @@ void connection::send_login(std::string user, std::string pass) {
     }
 }
 
-void connection::send_file(std::string filename, std::string path){
+void connection::send_file(std::string filename, std::string path) {
     clearBuffer();
-    
+
     std::stringstream ss;
     ss << path << "/" << filename;
     std::string file = ss.str();
     ss.clear();
-    
+
     std::ifstream filetosend;
     filetosend.open(file.c_str(), std::ifstream::binary);
-    
-    if(filetosend){
-        
+
+    if (filetosend) {
+
         std::ifstream getfilesize;
-        getfilesize.open(file.c_str(),std::ios::ate);
+        getfilesize.open(file.c_str(), std::ios::ate);
 
         unsigned long filesize = (unsigned long) getfilesize.tellg();
         unsigned long blockcount = (unsigned long) ceil((float) filesize / FILEBUF);
         unsigned long lastBlockSize = filesize % FILEBUF;
-        
+
         getfilesize.close();
         getfilesize.clear();
-        
+
         clearBuffer();
         klcp response;
         response.set("type", "file");
@@ -258,7 +269,7 @@ void connection::send_file(std::string filename, std::string path){
             error = true;
             errormsg = "file send failed";
         }
-    }else{
+    } else {
         printError("File not Found!");
         send_message("File not found");
         skip = true;
@@ -275,23 +286,23 @@ void connection::getFile(klcp request, std::string filepath) {
     std::ofstream filetosave;
 
     std::cout << std::endl;
-    
+
     filetosave.open(file.c_str(), std::ofstream::binary);
-    
+
     unsigned long _blocksize = request.getLong("blocksize");
     unsigned long blockcount = request.getLong("blockcount");
     unsigned long lastBlockSize = request.getLong("lastblocksize");
-    
+
     char FileBuffer[FILEBUF];
 
-    for(unsigned long block = 0; block < blockcount; block++){
+    for (unsigned long block = 0; block < blockcount; block++) {
 
         unsigned long blocksize = _blocksize;
-        if(block == (blockcount-1)){
+        if (block == (blockcount - 1)) {
             blocksize = lastBlockSize;
         };
-        
-        float progress = ((float)block / (float)blockcount);
+
+        float progress = ((float) block / (float) blockcount);
 
         int barWidth = 60;
 
@@ -327,6 +338,6 @@ void connection::getFile(klcp request, std::string filepath) {
     error = false;
 }
 
-void connection::close_connection(){
+void connection::close_connection() {
     close(connection_socket);
 }

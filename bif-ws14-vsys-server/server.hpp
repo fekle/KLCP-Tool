@@ -9,9 +9,11 @@
 #ifndef bif_ws14_vsys_server_connection_hpp
 #define bif_ws14_vsys_server_connection_hpp
 
+#include "ldap_connect.hpp"
+
 void *serverThread(int, std::string);
 
-void server(int port, std::string filepath){
+void server(int port, std::string filepath) {
 
     socklen_t addrlen;
     struct sockaddr_in address, cliaddress;
@@ -70,11 +72,13 @@ void *serverThread(int sock, std::string filepath) {
 
         if (login.get("type") == "login") {
 
+            ldap_auth auth;
+
             std::string user = login.get("username");
             std::string pass = login.get("password");
 
             //auth by alex
-            bool valid = true;
+            bool valid = auth.establish_ldap_auth(user, pass);
 
             if (valid) {
 
