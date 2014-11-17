@@ -106,7 +106,7 @@ writen(int fd, const char *vptr, size_t n)
 void printError(std::string msg) {
     std::cout << std::endl;
     std::cout << BOLDRED << "|==================== ERROR ===================|" << std::endl;
-    std::cout << msg << std::endl;
+    std::cout << " " << msg << std::endl;
     std::cout << "|==============================================|" << RESET;
     std::cout << std::endl << std::endl;
 }
@@ -114,7 +114,7 @@ void printError(std::string msg) {
 void printInfo(std::string msg) {
     std::cout << std::endl;
     std::cout << BOLDYELLOW << "|==================== INFO ====================|" << std::endl;
-    std::cout << "" << msg << std::endl;
+    std::cout << " " << msg << std::endl;
     std::cout << "|==============================================|" << RESET;
     std::cout << std::endl << std::endl;
 }
@@ -122,7 +122,7 @@ void printInfo(std::string msg) {
 void printMsg(std::string msg) {
     std::cout << std::endl;
     std::cout << BOLDBLUE << "|==================== MESSAGE =================|" << std::endl;
-    std::cout << "" << msg << std::endl;
+    std::cout << " " << msg << std::endl;
     std::cout << "|==============================================|" << RESET;
     std::cout << std::endl << std::endl;
 }

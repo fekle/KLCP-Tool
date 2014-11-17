@@ -24,6 +24,7 @@
 #include <cmath>
 #include <thread>
 #include "klcp.hpp"
+#include "common.hpp"
 #include <cstring>
 #define BUF 1000
 #define FILEBUF 100000
@@ -96,12 +97,13 @@ klcp connection::recieve() {
     if (request.recieve(&connection_socket)) {
 
         if (request.get("type") == "message") {
-            long msglength = atol(request.get("length").c_str());
+            unsigned long msglength = (unsigned long) atol(request.get("length").c_str());
             char msgBuffer[msglength];
 
-            readn(connection_socket, msgBuffer, msglength);
+            readn(connection_socket, msgBuffer, (size_t) msglength);
 
             std::string msg(msgBuffer);
+            msg.resize(msglength, ' ');
             request.set("msg", msg);
         }
 

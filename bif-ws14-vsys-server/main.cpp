@@ -14,7 +14,7 @@
 #include "client.hpp"
 
 int main(int argc, char **argv){
-    
+
     if(argc<5){
         std::stringstream ss;
         ss << "ERROR: not enough Arguments!" << std::endl;
@@ -23,13 +23,13 @@ int main(int argc, char **argv){
         ss.clear();
         return EXIT_FAILURE;
     }
-    
+
     std::vector<std::string> args(argv + 1, argv + argc);
-    
+
     std::string type = args[0];
-    
+
 //    type = "client";
-    
+
     std::string adress = args[1];
     int port = stoi(args[2]);
     std::string filepath = args[3];
@@ -41,7 +41,7 @@ int main(int argc, char **argv){
     printInfo(ss.str());
 
     ss.clear();
-    
+
     if(type == "server"){
         server(port, filepath);
     }else if(type == "client"){
@@ -49,6 +49,6 @@ int main(int argc, char **argv){
     }else{
         return EXIT_FAILURE;
     }
-    
+
     return EXIT_SUCCESS;
 }

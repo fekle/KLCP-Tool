@@ -1,5 +1,2 @@
-/bif-ws14-vsys-server/build/*
 /bif-ws14-vsys-server.xcodeproj/project.xcworkspace/xcuserdata/*
-/ServerFiles/*
-/ClientFiles/*
 /.idea/workspace.xml

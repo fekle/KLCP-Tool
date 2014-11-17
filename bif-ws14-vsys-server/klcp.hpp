@@ -61,7 +61,7 @@ bool klcp::recieve(int *socket) {
     ssize_t x = readn(*socket, buffer, BUF);
 
     if (x <= 0) {
-        printError("Failed to read from socket or client/server disconnected.");
+        printError("Failed to read from socket or client/server \n disconnected.");
 
         return false;
     } else {
@@ -111,7 +111,7 @@ bool klcp::send(int *socket) {
     ssize_t x = writen(*socket, buffer, BUF);
 
     if (x <= 0) {
-        printError("Failed to write to socket or client/server disconnected.");
+        printError("Failed to write to socket or client/server\n disconnected.");
 
         return false;
     } else {
