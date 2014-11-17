@@ -1,10 +1,11 @@
-//
-//  vsys-server.h
-//  VSYS-Server
-//
-//  Created by Felix Klein on 24.10.14.
-//  Copyright (c) 2014 Felix Klein, Aleksandar Lepojic. All rights reserved.
-//
+/**
+* connection.hpp
+* Handles the connection funcitons like sending and recieving different types of informations - works together with klcp.hpp
+* Copyright (c) 2014 Felix Klein, Aleksandar Lepojic. All rights reserved.
+*/
+
+#ifndef bif_ws14_vsys_server_connection_hpp
+#define bif_ws14_vsys_server_connection_hpp
 
 #include <iostream>
 #include <errno.h>
@@ -27,15 +28,17 @@
 #include "common.hpp"
 #include <cstring>
 
+/**
+* Define buffers
+* The normal message buffer is 1000 bytes,
+* the file buffer ist 100 kilobytes (used for sending/recieving files)
+*/
 #define BUF 1000
 #define FILEBUF 100000
 
-#ifndef connection_connection_h
-#define connection_connection_h
-
-
-#endif
-
+/**
+* Main class for connections
+*/
 class connection {
 private:
     int connection_socket;
@@ -72,26 +75,44 @@ public:
     std::string errormsg;
 };
 
+/**
+* Function for clearing the buffer
+*/
+void connection::clearBuffer() {
+    bzero(buffer, BUF);
+}
+
+/**
+* Empty instantiation, used by client
+*/
 connection::connection() {
     clearBuffer();
 }
 
-void connection::clearBuffer() {
-//    memset(buffer, 0, BUF);
-    bzero(buffer, BUF);
-}
-
+/**
+* Instantiation with socket, used by server
+*/
 connection::connection(int socket) {
+    clearBuffer();
     connection_socket = socket;
 }
 
+/**
+*  Function for establishing a new client connection, used by client (duh!)
+*/
 void connection::new_client_connection(int port, std::string _adress) {
+    /**
+    * Socket variables
+    */
     struct sockaddr_in address;
     memset(&address, 0, sizeof(address));
     address.sin_family = AF_INET;
     address.sin_port = htons(port);
     inet_aton(_adress.c_str(), &address.sin_addr);
 
+    /**
+    * Try to connect, if it fails print a error message and set the error variable to TRUE
+    */
     if (connect(connection_socket, (struct sockaddr *) &address, sizeof(address)) == 0) {
         error = false;
         printInfo("Connected!");
@@ -99,14 +120,23 @@ void connection::new_client_connection(int port, std::string _adress) {
         error = true;
         printError("Connection Failed!");
     }
-    clearBuffer();
 }
 
+/**
+* Funciton for recieving from the server/client.
+* Returns a klcp object.
+*/
 klcp connection::recieve() {
     klcp request;
 
+    /**
+    * error checking - klcp returns TRUE when reading is succesful, FALSE if not
+    */
     if (request.recieve(&connection_socket)) {
 
+        /**
+        * check if Type is a message, if so, read the number of bytes defined by "msglength" in the header from the socket
+        */
         if (request.get("type") == "message") {
             unsigned long msglength = (unsigned long) atol(request.get("length").c_str());
             char msgBuffer[msglength];
@@ -114,6 +144,10 @@ klcp connection::recieve() {
             readn(connection_socket, msgBuffer, (size_t) msglength);
 
             std::string msg(msgBuffer);
+
+            /**
+            * Resize message to the correct size, kinda "hacky", but works very well
+            */
             msg.resize(msglength, ' ');
             request.set("msg", msg);
         }
@@ -127,7 +161,13 @@ klcp connection::recieve() {
     return request;
 }
 
+/**
+* Function for sending a Message
+*/
 void connection::send_message(std::string message) {
+    /**
+    * Determine Message size, klcp object, set headers etc
+    */
     unsigned long msglength = message.size();
     char msgBuffer[msglength];
     std::copy(message.begin(), message.end(), msgBuffer);
@@ -135,6 +175,9 @@ void connection::send_message(std::string message) {
     response.set("type", "message");
     response.set("length", std::to_string(msglength));
 
+    /**
+    * If sending the header is successful, write the message
+    */
     if (response.send(&connection_socket)) {
         writen(connection_socket, msgBuffer, msglength);
     } else {
@@ -143,7 +186,9 @@ void connection::send_message(std::string message) {
     }
 }
 
-
+/**
+* Send command - very similar to send_message, but without sending the message (duh!) and a different "type" field in the header - "command"
+*/
 void connection::send_command(std::string cmd, std::string val) {
     clearBuffer();
     klcp response;
@@ -159,6 +204,9 @@ void connection::send_command(std::string cmd, std::string val) {
     }
 }
 
+/**
+* The same as above, but with just one variable. E.g for sending the LIST command
+*/
 void connection::send_command(std::string cmd) {
     clearBuffer();
     klcp response;
@@ -174,7 +222,9 @@ void connection::send_command(std::string cmd) {
     }
 }
 
-
+/**
+* Similar to the send_command functions, but with type "login" and passing the data entered by the user
+*/
 void connection::send_login(std::string user, std::string pass) {
     clearBuffer();
     klcp response;
@@ -190,30 +240,53 @@ void connection::send_login(std::string user, std::string pass) {
     }
 }
 
+/**
+* Our biggest function :)
+* Function for sending a file.
+* Takes the filename and the root path (supplied by the user at program start) as arguments
+*/
 void connection::send_file(std::string filename, std::string path) {
-    clearBuffer();
-
+    /**
+    * Construct a valid filepath out of the "path" and "filename" variables.
+    * It is possible to end up as a string with two "/" somewhere, but POSIX doesn't care :)
+    */
     std::stringstream ss;
     ss << path << "/" << filename;
     std::string file = ss.str();
     ss.clear();
 
+    /**
+    * Open the file in a ifstram, in binary mode
+    */
     std::ifstream filetosend;
     filetosend.open(file.c_str(), std::ifstream::binary);
 
+    /**
+    * If the file exits continue
+    */
     if (filetosend) {
 
+        /**
+        * Open the file another time, this time at the end, to determine it's size
+        * I know, this could be made more beautiful, but this implementation is quite stable
+        */
         std::ifstream getfilesize;
-        getfilesize.open(file.c_str(), std::ios::ate);
-
+        getfilesize.open(file.c_str(), std::ifstream::ate);
         unsigned long filesize = (unsigned long) getfilesize.tellg();
-        unsigned long blockcount = (unsigned long) ceil((float) filesize / FILEBUF);
-        unsigned long lastBlockSize = filesize % FILEBUF;
-
         getfilesize.close();
         getfilesize.clear();
 
-        clearBuffer();
+        /**
+        * Determine the blockcount and the size of the last block (for chunked sending of the file)
+        */
+        unsigned long blockcount = (unsigned long) ceil((float) filesize / FILEBUF);
+        unsigned long lastBlockSize = filesize % FILEBUF;
+
+        /**
+        * Create a new klcp object, and set the headers.
+        *   type, filename, filesize, blocksize, blockcount and lastblocksize
+        *   - Theoretically the client could calculate most of tose values himself, but for safety and convenience we send the values to him. Don't need to do the work twice.
+        */
         klcp response;
         response.set("type", "file");
         response.set("filename", filename);
@@ -222,30 +295,51 @@ void connection::send_file(std::string filename, std::string path) {
         response.setLong("blockcount", blockcount);
         response.setLong("lastblocksize", lastBlockSize);
 
+        /**
+        * If header is sent successfully
+        */
         if (response.send(&connection_socket)) {
+            /**
+            * create filebuffer
+            */
             char FileBuffer[FILEBUF];
 
+            /**
+            * loop through the blockcount, sending each block to the client
+            */
             for (unsigned long block = 0; block < blockcount; block++) {
-
                 unsigned long blocksize = FILEBUF;
+
+                /**
+                * if the block is the last block, then set the blocksize to lastblocksize, because the last block is smaller than the rest
+                */
                 if (block == (blockcount - 1)) {
                     blocksize = lastBlockSize;
                 };
 
+                /**
+                * calculate the progress
+                */
                 float progress = ((float) block / (float) blockcount);
 
-                int barWidth = 60;
-
+                /**
+                * Display a progression bar.
+                * This implementation use carriage return and flushing to replace the last line with a new one, to update the progress bar
+                */
                 std::cout << BOLDGREEN << "Uploading... [";
-                int pos = (int) round(barWidth * progress);
+                int pos = (int) round(60 * progress);
+                /**
+                * If we are in the last block, then always set progress to 100, because sometimes, when we have small files, the bar would stop at values like 98%,
+                *   even though the file send has finished
+                */
                 if (block == blockcount - 1) {
-                    for (int i = 0; i < barWidth; ++i) {
+                    for (int i = 0; i < 60; ++i) {
                         std::cout << "#";
                     }
                     std::cout << "] 100%\r" << RESET;
                     std::cout.flush();
                 } else {
-                    for (int i = 0; i < barWidth; ++i) {
+                    for (int i = 0; i < 60; ++i) {
                         if (i <= pos) std::cout << "#";
                         else std::cout << "-";
                     }
@@ -253,11 +347,21 @@ void connection::send_file(std::string filename, std::string path) {
                     std::cout.flush();
                 }
 
-
+                /**
+                * Read block from file and write it to socket, with error handling
+                */
                 filetosend.read(FileBuffer, blocksize);
-                writen(connection_socket, FileBuffer, blocksize);
+                ssize_t x = writen(connection_socket, FileBuffer, blocksize);
+                if (x <= 0) {
+                    error = true;
+                    errormsg = "failed to write to socket";
+                    break;
+                }
             }
 
+            /**
+            * close the file
+            */
             filetosend.close();
 
 
@@ -272,10 +376,18 @@ void connection::send_file(std::string filename, std::string path) {
     } else {
         printError("File not Found!");
         send_message("File not found");
+        /**
+        * File not found is not a error in our case, we just tell the client to skip, meaning he doesn't wait for messages by the server, and asks for a new command
+        *   immediately
+        */
         skip = true;
     }
 }
 
+/**
+* The opposite function of sendFile()
+*   We aren't going to explain everything here, because many parts are similar to the sendFile() function
+*/
 void connection::getFile(klcp request, std::string filepath) {
 
     std::stringstream ss;
@@ -283,12 +395,15 @@ void connection::getFile(klcp request, std::string filepath) {
     std::string file = ss.str();
     ss.clear();
 
+    /**
+    * Open/Create target file as ofstream in binary mode
+    */
     std::ofstream filetosave;
-
-    std::cout << std::endl;
-
     filetosave.open(file.c_str(), std::ofstream::binary);
 
+    /**
+    * get blocksize, blockcount and lastBlockSize from the klcp send by the server
+    */
     unsigned long _blocksize = request.getLong("blocksize");
     unsigned long blockcount = request.getLong("blockcount");
     unsigned long lastBlockSize = request.getLong("lastblocksize");
@@ -304,18 +419,16 @@ void connection::getFile(klcp request, std::string filepath) {
 
         float progress = ((float) block / (float) blockcount);
 
-        int barWidth = 60;
-
         std::cout << BOLDGREEN << "Downloading... [";
-        int pos = (int) round(barWidth * progress);
+        int pos = (int) round(60 * progress);
         if (block == blockcount - 1) {
-            for (int i = 0; i < barWidth; ++i) {
+            for (int i = 0; i < 60; ++i) {
                 std::cout << "#";
             }
             std::cout << "] 100%\r" << RESET;
             std::cout.flush();
         } else {
-            for (int i = 0; i < barWidth; ++i) {
+            for (int i = 0; i < 60; ++i) {
                 if (i <= pos) std::cout << "#";
                 else std::cout << "-";
             }
@@ -323,8 +436,11 @@ void connection::getFile(klcp request, std::string filepath) {
             std::cout.flush();
         }
 
-
-        if (readn(connection_socket, FileBuffer, blocksize) == -1) {
+        /**
+        * read file from socket and write to file, do obvious error handling
+        */
+        ssize_t x = readn(connection_socket, FileBuffer, blocksize);
+        if (x <= 0) {
             error = true;
             errormsg = "failed to read file";
             break;
@@ -338,6 +454,11 @@ void connection::getFile(klcp request, std::string filepath) {
     error = false;
 }
 
+/**
+* Function for closing the socket
+*/
 void connection::close_connection() {
     close(connection_socket);
 }
+
+#endif

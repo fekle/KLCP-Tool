@@ -1,16 +1,18 @@
-//
-//  common.hpp
-//  bif-ws14-vsys-server
-//
-//  Created by Felix Klein on 13.11.14.
-//  Copyright (c) 2014 Aleksandar Lepojic, Felix Klein. All rights reserved.
-//
+/**
+* common.hpp
+* commonly used functions and macros
+* Copyright (c) 2014 Aleksandar Lepojic, Felix Klein. All rights reserved.
+*/
 
 #ifndef bif_ws14_vsys_server_common_hpp
 #define bif_ws14_vsys_server_common_hpp
 
 #include <dirent.h>
+#include <unistd.h>
 
+/**
+* Macros for Colored output.
+*/
 #define RESET   "\033[0m"
 #define BLACK   "\033[30m"      /* Black */
 #define RED     "\033[31m"      /* Red */
@@ -29,10 +31,10 @@
 #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
-#include <termios.h>
-#include <unistd.h>
 
-
+/**
+* List the files in a directory
+*/
 std::string filesInDir(std::string path) {
     std::string files;
 
@@ -56,8 +58,11 @@ std::string filesInDir(std::string path) {
     return files;
 };
 
-ssize_t                         /* Read "n" bytes from a descriptor. */
-readn(int fd, char *vptr, size_t n) {
+/**
+* readn function (from http://www.informit.com/articles/article.aspx?p=169505&seqNum=9)
+* ensures ALL bytes are read
+*/
+ssize_t readn(int fd, char *vptr, size_t n) {
     size_t nleft;
     ssize_t nread;
     char *ptr;
@@ -79,8 +84,11 @@ readn(int fd, char *vptr, size_t n) {
     return (n - nleft);         /* return >= 0 */
 }
 
-ssize_t                         /* Write "n" bytes to a descriptor. */
-writen(int fd, const char *vptr, size_t n) {
+/**
+* writen function (from http://www.informit.com/articles/article.aspx?p=169505&seqNum=9)
+* ensures ALL bytes are written
+*/
+ssize_t writen(int fd, const char *vptr, size_t n) {
     size_t nleft;
     ssize_t nwritten;
     const char *ptr;
@@ -101,14 +109,20 @@ writen(int fd, const char *vptr, size_t n) {
     return (n);
 }
 
+/**
+* Function for printing Errors
+*/
 void printError(std::string msg) {
-    std::cout << std::endl;
-    std::cout << BOLDRED << "|==================== ERROR ===================|" << std::endl;
-    std::cout << " " << msg << std::endl;
-    std::cout << "|==============================================|" << RESET;
-    std::cout << std::endl << std::endl;
+    std::cerr << std::endl;
+    std::cerr << BOLDRED << "|==================== ERROR ===================|" << std::endl;
+    std::cerr << " " << msg << std::endl;
+    std::cerr << "|==============================================|" << RESET;
+    std::cerr << std::endl << std::endl;
 }
 
+/**
+* Function for printing Infos
+*/
 void printInfo(std::string msg) {
     std::cout << std::endl;
     std::cout << BOLDYELLOW << "|==================== INFO ====================|" << std::endl;
@@ -117,6 +131,9 @@ void printInfo(std::string msg) {
     std::cout << std::endl << std::endl;
 }
 
+/**
+* Function for printing Messages
+*/
 void printMsg(std::string msg) {
     std::cout << std::endl;
     std::cout << BOLDBLUE << "|==================== MESSAGE =================|" << std::endl;
