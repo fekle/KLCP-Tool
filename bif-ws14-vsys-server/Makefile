@@ -8,9 +8,9 @@ NAME            =   VSYS
 VERSION		    =   ` date +"%d-%m-%Y_%H-%M-%S"`
 ARCHIVE		    =   ${NAME}-Lepojic_Klein-${VERSION}
 
-DEBUGFLAGS      =   -march=native -std=gnu++11 -O0 -g -Wall
-EXTRADEBUGFLAGS =   -march=native -std=c++11 -O0 -g -Weverything
-PRODFLAGS       =   -march=native -std=gnu++11 -Ofast
+DEBUGFLAGS      =   -march=native -std=gnu++11 -O0 -g -Wall -Wno-deprecated-declarations
+EXTRADEBUGFLAGS =   -march=native -std=c++11 -O0 -g -Weverything -Wno-deprecated-declarations
+PRODFLAGS       =   -march=native -std=gnu++11 -Ofast -Wno-deprecated-declarations
 LDFLAGS         =   -lpthread -DLDAP_DEPRECATED -lldap -llber
 
 all: debug

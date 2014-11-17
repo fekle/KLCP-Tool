@@ -1,5 +1,4 @@
-#include <string>
-#include <iostream>
+
 #include <ldap.h>
 
 #define LDAP_HOST "ldap.technikum-wien.at"
@@ -10,11 +9,11 @@
 #define BIND_PW NULL
 
 class ldap_auth {
-
+private:
+    int x;
 public:
     void print_hello();
-
-    bool establish_ldap_auth(std::string username, std::string password);
+    bool establish_ldap_auth(std::string, std::string);
 };
 
 void ldap_auth::print_hello() {

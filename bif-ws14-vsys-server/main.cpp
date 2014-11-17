@@ -10,6 +10,7 @@
 #include <fstream>
 #include "common.hpp"
 #include "connection.hpp"
+#include "ldap_connect.hpp"
 #include "server.hpp"
 #include "client.hpp"
 
