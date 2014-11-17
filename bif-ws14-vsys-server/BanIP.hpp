@@ -117,7 +117,7 @@ bool banned_ip::is_banned(std::string _ip, time_t _duration) {
     if (_duration < 0) {
         return false;
     }
-
+    _duration = _duration * 60;
     IP tmp_ip(_ip, _duration);
     ip_s.push_back(tmp_ip);
 
