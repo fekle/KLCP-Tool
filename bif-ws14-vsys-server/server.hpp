@@ -6,6 +6,8 @@
 //  Copyright (c) 2014 Aleksandar Lepojic, Felix Klein. All rights reserved.
 //
 
+#include "ldap_connect.hpp"
+
 #ifndef bif_ws14_vsys_server_connection_hpp
 #define bif_ws14_vsys_server_connection_hpp
 

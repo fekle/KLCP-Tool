@@ -9,6 +9,7 @@ set(SOURCE_FILES
     bif-ws14-vsys-server/connection.hpp
     bif-ws14-vsys-server/klcp.hpp
     bif-ws14-vsys-server/main.cpp
-    bif-ws14-vsys-server/server.hpp)
+    bif-ws14-vsys-server/server.hpp
+    bif-ws14-vsys-server/ldap_connect.hpp)
 
 add_executable(bif_ws14_vsys_server ${SOURCE_FILES})
