@@ -1,4 +1,5 @@
 #!/bin/bash
 
 cd build
-./klcp_tool server localhost 6543 ../../ServerFiles
+cp klcp_tool vsys-server
+./vsys-server server localhost 6543 ../../ServerFiles

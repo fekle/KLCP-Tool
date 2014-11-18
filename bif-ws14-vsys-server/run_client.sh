@@ -1,4 +1,5 @@
 #!/bin/bash
 
 cd build
-./klcp_tool client localhost 6543 ../../ClientFiles
+cp klcp_tool vsys-client
+./vsys-client client localhost 6543 ../../ClientFiles
