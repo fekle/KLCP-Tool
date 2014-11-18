@@ -301,6 +301,10 @@ void connection::send_file(std::string filename, std::string path) {
             */
             char FileBuffer[FILEBUF];
 
+            std::stringstream info;
+            info << "Sending file \"" << filename << "\" (" << readable_fs((double) filesize) << " / " << readable_fs_i((double) filesize) << ")";
+            printInfo(info.str());
+
             /**
             * loop through the blockcount, sending each block to the client
             */
@@ -404,6 +408,12 @@ void connection::getFile(klcp request, std::string filepath) {
     unsigned long _blocksize = request.getLong("blocksize");
     unsigned long blockcount = request.getLong("blockcount");
     unsigned long lastBlockSize = request.getLong("lastblocksize");
+    std::string filename = request.get("filename");
+    unsigned long filesize = request.getLong("filesize");
+
+    std::stringstream info;
+    info << "Recieving file \"" << filename << "\" (" << readable_fs((double) filesize) << " / " << readable_fs_i((double) filesize) << ")";
+    printInfo(info.str());
 
     char FileBuffer[FILEBUF];
 
