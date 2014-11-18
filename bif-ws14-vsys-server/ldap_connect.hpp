@@ -7,7 +7,7 @@
 #define SCOPE LDAP_SCOPE_SUBTREE
 #define BIND_USER NULL        /* anonymous bind with user and pw NULL */
 #define BIND_PW NULL
-#define BANNED_FOR_TIME 60
+#define BANNED_FOR_TIME 1
 
 
 /**
@@ -19,7 +19,13 @@ private:
     int login_attempts = 0;
 public:
     bool establish_ldap_auth(std::string, std::string, std::string, banned_ip *);
+
+    ldap_auth();
 };
+
+ldap_auth::ldap_auth() {
+    //nothin
+}
 
 /**
 * Taking username, password, ip address and an instance of the banning class as a parameter.
@@ -76,15 +82,15 @@ bool ldap_auth::establish_ldap_auth(std::string username, std::string password, 
         if (ld_count_entries == 1) {
             e = ldap_first_entry(ld, result);
             strcat(dn, ldap_get_dn(ld, e));
-            std::stringstream ss;
-            ss << " DN from search: " << dn << std::endl;
-            printInfo(ss.str());
-        } else if (ld_count_entries == 0) {
+        }
+        else if (ld_count_entries == 0) {
 
-        } else {
-            std::stringstream ss;
-            ss << "Invalid number of results: " << ld_count_entries << std::endl;
-            printError(ss.str());
+            std::stringstream dns;
+            dns << "uid=" << username << ",ou=People,dc=technikum-wien,dc=at";
+            std::string dn_string = dns.str();
+            std::copy(dn_string.begin(), dn_string.end(), dn);
+        }
+        else {
             return EXIT_FAILURE;
         }
     } else {

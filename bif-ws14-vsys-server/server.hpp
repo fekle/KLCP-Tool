@@ -149,6 +149,7 @@ void *serverThread(int sock, std::string filepath, std::string clientIP, banned_
             std::string user = login.get("username");
             std::string pass = login.get("password");
 
+
             /**
             * Check if credentials are valid (true = valid, false = invalid)
             */
@@ -157,9 +158,7 @@ void *serverThread(int sock, std::string filepath, std::string clientIP, banned_
             /**
             * For Debugging, and using from outside FH
             */
-            if (user == "debug" && pass == "test") {
-                valid = true;
-            }
+
 
             /**
             * If invalid, tell the user and wait for new LOGIN request

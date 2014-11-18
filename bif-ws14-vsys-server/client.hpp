@@ -35,7 +35,6 @@ void client(std::string adress, int port, std::string filepath) {
     * Error handling
     */
     if (!conn.error) {
-        printInfo("Connected!");
         do {
             cmd = "";
             cmd2 = "";

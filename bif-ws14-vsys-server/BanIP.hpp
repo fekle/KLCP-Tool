@@ -91,7 +91,6 @@ bool banned_ip::the_ban(std::string _ip) {
 
     if (bancount > 0) {
         for (int i = 0; i <= bancount; i++) {
-            printInfo("FORLOOOP 2");
 
             if (ip_s[i].getIP() == _ip) {
 
