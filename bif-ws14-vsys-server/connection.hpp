@@ -267,14 +267,11 @@ void connection::send_file(std::string filename, std::string path) {
     if (filetosend) {
 
         /**
-        * Open the file another time, this time at the end, to determine it's size
-        * I know, this could be made more beautiful, but this implementation is quite stable
+        * Determine the file's size
         */
-        std::ifstream getfilesize;
-        getfilesize.open(file.c_str(), std::ifstream::ate);
-        unsigned long filesize = (unsigned long) getfilesize.tellg();
-        getfilesize.close();
-        getfilesize.clear();
+        struct stat info;
+        lstat(file.c_str(), &info);
+        unsigned long filesize = (unsigned long) info.st_size;
 
         /**
         * Determine the blockcount and the size of the last block (for chunked sending of the file)

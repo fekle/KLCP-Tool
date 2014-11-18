@@ -9,6 +9,8 @@
 
 #include <dirent.h>
 #include <unistd.h>
+#include <sstream>
+#include <sys/stat.h>
 
 /**
 * Macros for Colored output.
@@ -31,32 +33,67 @@
 #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
+/**
+* Human readable FileSize (from http://programanddesign.com/cpp/human-readable-file-size-in-c/)
+*/
+std::string readable_fs(double size/*in bytes*/) {
+    int i = 0;
+    const char *units[] = {"B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+    while (size > 1000) {
+        size /= 1000;
+        i++;
+    }
+    char buf[100];
+    sprintf(buf, "%.*f %s", i, size, units[i]);
+    return std::string(buf);
+}
+
+std::string readable_fs_i(double size/*in bytes*/) {
+    int i = 0;
+    const char *units[] = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
+    while (size > 1024) {
+        size /= 1024;
+        i++;
+    }
+    char buf[100];
+    sprintf(buf, "%.*f %s", i, size, units[i]);
+    return std::string(buf);
+}
 
 /**
 * List the files in a directory
 */
 std::string filesInDir(std::string path) {
-    std::string files;
+    std::stringstream files;
 
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir(path.c_str())) != NULL) {
-        files = "Available Files:\n";
+        files << "Available Files:" << std::endl;
         int i = 0;
         while ((ent = readdir(dir)) != NULL) {
             if (i > 1) {
-                files += "\n";
-                files += ent->d_name;
+                std::string name(ent->d_name);
+                if (name[0] != '.') {
+                    std::stringstream fullpath;
+                    fullpath << path << "/" << name;
+                    struct stat info;
+                    lstat(fullpath.str().c_str(), &info);
+                    std::string filesize = readable_fs(info.st_size);
+                    std::string filesize_i = readable_fs_i(info.st_size);
+                    files << std::endl << " " << BOLDYELLOW << name << BOLDBLUE << "\t - " << filesize << " (" << filesize_i << ")";
+                }
             }
             i++;
         }
         closedir(dir);
     } else {
-        files = "Directory not found";
+        files << "Directory not found";
     }
 
-    return files;
+    return files.str();
 };
+
 
 /**
 * readn function (from http://www.informit.com/articles/article.aspx?p=169505&seqNum=9)

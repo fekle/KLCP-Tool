@@ -11,9 +11,9 @@
 
 
 /**
- * LDAP connection realised with one method.
- * Also implying the banning function because of convenience.
- */
+* LDAP connection realised with one method.
+* Also implying the banning function because of convenience.
+*/
 class ldap_auth {
 private:
     int login_attempts = 0;
@@ -38,7 +38,7 @@ bool ldap_auth::establish_ldap_auth(std::string username, std::string password, 
     char uid[] = "uid";
     char cn[] = "cn";
     char *attribs[3];
-    
+
     attribs[0] = uid;
     attribs[1] = cn;
     attribs[2] = NULL;
