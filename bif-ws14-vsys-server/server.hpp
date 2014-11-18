@@ -87,7 +87,7 @@ void server(int port, std::string filepath) {
     /**
     * Close socket
     */
-    close(listen_socket);
+   // close(listen_socket);
 }
 
 /**

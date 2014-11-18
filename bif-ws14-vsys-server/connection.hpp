@@ -301,9 +301,9 @@ void connection::send_file(std::string filename, std::string path) {
             */
             char FileBuffer[FILEBUF];
 
-            std::stringstream info;
-            info << "Sending file \"" << filename << "\" (" << readable_fs((double) filesize) << " / " << readable_fs_i((double) filesize) << ")";
-            printInfo(info.str());
+            std::stringstream info2;
+            info2 << "Sending file \"" << filename << "\" (" << readable_fs((double) filesize) << " / " << readable_fs_i((double) filesize) << ")";
+            printInfo(info2.str());
 
             /**
             * loop through the blockcount, sending each block to the client

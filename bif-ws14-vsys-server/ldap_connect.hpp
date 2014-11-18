@@ -117,9 +117,4 @@ bool ldap_auth::establish_ldap_auth(std::string username, std::string password, 
     } else {
         return false;
     }
-
-    ldap_msgfree(result);
-    free(attribs[0]);
-    free(attribs[1]);
-    ldap_unbind(ld);
 }
