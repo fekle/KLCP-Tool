@@ -15,8 +15,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "67"
             endingLineNumber = "67"
-            landmarkName = "connection::connection(int socket)"
-            landmarkType = "5">
+            landmarkName = "class connection"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -31,7 +31,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "158"
             endingLineNumber = "158"
-            landmarkName = "connection::send_file(std::string filename, std::string path)"
+            landmarkName = "connection::recieve()"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -47,7 +47,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "95"
             endingLineNumber = "95"
-            landmarkName = "klcp::send(int* socket)"
+            landmarkName = "klcp::recieve(int *socket)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
