@@ -1,3 +1,13 @@
+/**
+* ldap_connect.hpp
+* Implements the LDAP stuff
+*
+* Created by Aleksandar Lepojic & Felix Klein, 2014
+*/
+
+#ifndef bif_ws14_vsys_server_ldap_connect_hpp
+#define bif_ws14_vsys_server_ldap_connect_hpp
+
 #include <ldap.h>
 #include "BanIP.hpp"
 
@@ -118,3 +128,5 @@ bool ldap_auth::establish_ldap_auth(std::string username, std::string password, 
         return false;
     }
 }
+
+#endif

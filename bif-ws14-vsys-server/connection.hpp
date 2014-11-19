@@ -1,7 +1,8 @@
 /**
 * connection.hpp
 * Handles the connection funcitons like sending and recieving different types of informations - works together with klcp.hpp
-* Copyright (c) 2014 Felix Klein, Aleksandar Lepojic. All rights reserved.
+*
+* Created by Aleksandar Lepojic & Felix Klein, 2014
 */
 
 #ifndef bif_ws14_vsys_server_connection_hpp

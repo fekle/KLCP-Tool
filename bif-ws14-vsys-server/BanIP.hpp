@@ -1,10 +1,9 @@
-//
-//  BanIP.h
-//  bif-ws14-vsys-server
-//
-//  Created by Aleksandar Lepojic on 15.11.14.
-//  Copyright (c) 2014 Aleksandar Lepojic, Felix Klein. All rights reserved.
-//
+/**
+* BanIP.hpp
+* Implements the Banning Service
+*
+* Created by Aleksandar Lepojic & Felix Klein, 2014
+*/
 
 #ifndef bif_ws14_vsys_server_BanIP_hpp
 #define bif_ws14_vsys_server_BanIP_hpp

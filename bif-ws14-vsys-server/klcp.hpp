@@ -1,7 +1,8 @@
 /**
 * klcp.hpp
 * KLCP - Klein Lepojic Communication Protocol
-* Copyright (c) 2014 Felix Klein, Aleksandar Lepojic. All rights reserved.
+*
+* Created by Aleksandar Lepojic & Felix Klein, 2014
 */
 
 #ifndef bif_ws14_vsys_server_klcp_hpp

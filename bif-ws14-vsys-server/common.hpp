@@ -1,7 +1,8 @@
 /**
 * common.hpp
 * commonly used functions and macros
-* Copyright (c) 2014 Aleksandar Lepojic, Felix Klein. All rights reserved.
+*
+* Created by Aleksandar Lepojic & Felix Klein, 2014
 */
 
 #ifndef bif_ws14_vsys_server_common_hpp

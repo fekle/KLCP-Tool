@@ -1,6 +1,7 @@
 /**
 * main.hpp
-* Copyright (c) 2014 Felix Klein, Aleksandar Lepojic. All rights reserved.
+*
+* Created by Aleksandar Lepojic & Felix Klein, 2014
 */
 
 #include <iostream>

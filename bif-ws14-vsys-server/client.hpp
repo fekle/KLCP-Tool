@@ -1,13 +1,14 @@
 /**
 * client.hpp
 * Implements the client function
-* Copyright (c) 2014 Felix Klein, Aleksandar Lepojic. All rights reserved.
+*
+* Created by Aleksandar Lepojic & Felix Klein, 2014
 */
-
-#include <sys/termios.h>
 
 #ifndef bif_ws14_vsys_server_client_hpp
 #define bif_ws14_vsys_server_client_hpp
+
+#include <sys/termios.h>
 
 /**
 * Function for client

@@ -1,6 +1,8 @@
 /**
 * server.hpp
 * Implements the Server
+*
+* Created by Aleksandar Lepojic & Felix Klein, 2014
 */
 
 #include "ldap_connect.hpp"
@@ -87,7 +89,7 @@ void server(int port, std::string filepath) {
     /**
     * Close socket
     */
-   // close(listen_socket);
+    // close(listen_socket);
 }
 
 /**
