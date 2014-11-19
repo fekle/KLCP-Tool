@@ -7,7 +7,7 @@
 #define SCOPE LDAP_SCOPE_SUBTREE
 #define BIND_USER NULL        /* anonymous bind with user and pw NULL */
 #define BIND_PW NULL
-#define BANNED_FOR_TIME 1
+#define BANNED_FOR_TIME 60
 
 
 /**
